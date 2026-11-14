@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <!-- Screen Sharing / VNC servers advertise themselves over Bonjour as
+         _rfb._tcp. iOS requires both a usage string and the exact service
+         types the app browses before it will show the local-network prompt. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>peek uses the local network to find Macs with Screen Sharing turned on and to connect to them.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_rfb._tcp</string>
+    </array>
+    <key>UIRequiresFullScreen</key>
+    <false/>
+</dict>
+</plist>

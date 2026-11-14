@@ -1,0 +1,134 @@
+import CoreGraphics
+import Testing
+@testable import peek
+
+struct ModifierLogicTests {
+    @Test func toggleHoldsThenReleases() {
+        var logic = ModifierLogic()
+        #expect(logic.toggle(.command) == [.keyDown(KeySym.metaLeft)])
+        #expect(logic.held == [.command])
+        #expect(logic.toggle(.command) == [.keyUp(KeySym.metaLeft)])
+        #expect(logic.held.isEmpty)
+    }
+
+    @Test func wrapReleasesHeldModifiersAfterPress() {
+        var logic = ModifierLogic()
+        _ = logic.toggle(.shift)
+        _ = logic.toggle(.command)
+        let events = logic.wrap(ModifierLogic.press(KeySym.tab))
+        #expect(events == [.keyDown(KeySym.tab), .keyUp(KeySym.tab), .keyUp(KeySym.metaLeft), .keyUp(KeySym.shiftLeft)])
+        #expect(logic.held.isEmpty)
+        #expect(logic.wrap([.text("a")]) == [.text("a")])
+    }
+}
+
+struct ScreenGeometryTests {
+    let screen = CGSize(width: 1000, height: 500)
+    let view = CGSize(width: 400, height: 400)
+
+    @Test func fitScaleUsesTheTighterAxis() {
+        #expect(ScreenGeometry.fitScale(screen: screen, in: view) == 0.4)
+        #expect(ScreenGeometry.fitScale(screen: .zero, in: view) == 1)
+    }
+
+    @Test func fitIsCentered() {
+        let t = ScreenGeometry.transform(screen: screen, view: view, zoom: 1, pan: .zero)
+        #expect(t.scale == 0.4)
+        #expect(t.offset == CGPoint(x: 0, y: 100))
+    }
+
+    @Test func panIsClampedWhenZoomed() {
+        let t = ScreenGeometry.transform(screen: screen, view: view, zoom: 2, pan: CGSize(width: 999, height: -999))
+        #expect(t.scale == 0.8)
+        #expect(t.offset.x == 0, "can't pan past the left edge")
+        #expect(t.offset.y == 0, "image is exactly view-height tall, so it stays centered")
+        let left = ScreenGeometry.transform(screen: screen, view: view, zoom: 2, pan: CGSize(width: -999, height: 0))
+        #expect(left.offset.x == view.width - 800)
+    }
+
+    @Test func framebufferPointMapsAndClamps() {
+        let t = ScreenTransform(scale: 0.5, offset: CGPoint(x: 10, y: 20))
+        #expect(ScreenGeometry.framebufferPoint(CGPoint(x: 10, y: 20), transform: t, screen: screen) == (0, 0))
+        #expect(ScreenGeometry.framebufferPoint(CGPoint(x: 110, y: 70), transform: t, screen: screen) == (200, 100))
+        #expect(ScreenGeometry.framebufferPoint(CGPoint(x: -50, y: 9999), transform: t, screen: screen) == (0, 499))
+        #expect(ScreenGeometry.framebufferPoint(.zero, transform: ScreenTransform(scale: 0, offset: .zero), screen: screen) == (0, 0))
+    }
+}
+
+struct ZoomStateTests {
+    @Test func clampsZoomAndPansOnlyWhenZoomed() {
+        var state = ZoomState()
+        state.pinch(by: 0.5, centroidDelta: CGSize(width: 10, height: 10))
+        #expect(state.zoom == 1)
+        #expect(state.pan == .zero)
+        state.pinch(by: 2, centroidDelta: CGSize(width: 10, height: -5))
+        #expect(state.zoom == 2)
+        #expect(state.pan == CGSize(width: 10, height: -5))
+        state.pinch(by: 100, centroidDelta: .zero)
+        #expect(state.zoom == ZoomState.maximum)
+        #expect(state.isZoomed)
+        state.reset()
+        #expect(state == ZoomState())
+    }
+}
+
+struct ScrollAccumulatorTests {
+    @Test func emitsWholeStepsAndKeepsRemainder() {
+        var scroll = ScrollAccumulator(pointsPerStep: 10)
+        #expect(scroll.add(CGSize(width: 0, height: -15)) == (0, 1))
+        #expect(scroll.add(CGSize(width: 0, height: -5)) == (0, 1))
+        #expect(scroll.add(CGSize(width: 25, height: 0)) == (-2, 0))
+        scroll.reset()
+        #expect(scroll.add(CGSize(width: 4, height: 4)) == (0, 0))
+    }
+}
+
+struct GestureLogicTests {
+    let transform = ScreenTransform(scale: 1, offset: .zero)
+    let screen = CGSize(width: 100, height: 100)
+
+    private func inputs(_ gesture: ScreenGesture) -> [RemoteInput] {
+        GestureLogic.inputs(for: gesture, transform: transform, screen: screen)
+    }
+
+    @Test func clicks() {
+        #expect(inputs(.tap(CGPoint(x: 5, y: 6))) == [.move(x: 5, y: 6), .buttonDown(.left, x: 5, y: 6), .buttonUp(.left, x: 5, y: 6)])
+        #expect(inputs(.secondaryTap(CGPoint(x: 1, y: 1))).contains(.buttonDown(.right, x: 1, y: 1)))
+        #expect(inputs(.doubleTap(.zero)).count == 6)
+    }
+
+    @Test func dragAndScroll() {
+        #expect(inputs(.dragBegan(CGPoint(x: 2, y: 2))) == [.move(x: 2, y: 2), .buttonDown(.left, x: 2, y: 2)])
+        #expect(inputs(.dragMoved(CGPoint(x: 3, y: 3))) == [.move(x: 3, y: 3)])
+        #expect(inputs(.dragEnded(CGPoint(x: 4, y: 4))) == [.buttonUp(.left, x: 4, y: 4)])
+        #expect(inputs(.scroll(steps: .zero, at: .zero)).isEmpty)
+        #expect(inputs(.scroll(steps: CGSize(width: 1, height: -2), at: CGPoint(x: 9, y: 9))) == [.scroll(dx: 1, dy: -2, x: 9, y: 9)])
+    }
+}
+
+struct FrameThrottleTests {
+    @Test func coalescesUntilFlush() {
+        var scheduled: [@MainActor () -> Void] = []
+        let throttle = FrameThrottle(interval: 1) { _, work in scheduled.append(work) }
+        var flushes = 0
+        throttle.onFlush = { flushes += 1 }
+        throttle.markDirty()
+        throttle.markDirty()
+        #expect(scheduled.count == 1)
+        #expect(throttle.isPending)
+        scheduled[0]()
+        #expect(flushes == 1)
+        #expect(!throttle.isPending)
+        throttle.markDirty()
+        #expect(scheduled.count == 2)
+    }
+
+    @Test func defaultSchedulerFires() async throws {
+        let throttle = FrameThrottle(interval: 0.01)
+        var flushed = false
+        throttle.onFlush = { flushed = true }
+        throttle.markDirty()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(flushed)
+    }
+}

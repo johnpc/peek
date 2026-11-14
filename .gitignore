@@ -1,0 +1,8 @@
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+.DS_Store
+TestResults.xcresult/
+AcceptanceResults.xcresult/
+coverage.json
