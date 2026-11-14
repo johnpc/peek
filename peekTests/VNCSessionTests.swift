@@ -69,6 +69,8 @@ struct VNCSessionTests {
         #expect(desktop()?.suppliedCredentials == [nil])
         session.retry()
         session.submitCredential(username: "john", password: "secret", remember: false)
+        session.cancelCredential()
+        #expect(session.state == .connected, "a late cancel after submitting must not disconnect")
         session.disconnect()
         #expect(session.state == .disconnected(nil))
         #expect(desktop()?.disconnectCount == 1)
