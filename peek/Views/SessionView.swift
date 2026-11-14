@@ -1,11 +1,16 @@
 import SwiftUI
 
 /// Full-screen remote desktop: the screen, a thin toolbar, the optional
-/// keyboard bar, and the sign-in / status overlays.
+/// keyboard bar, and the sign-in / status / first-run tip overlays.
 struct SessionView: View {
     @ObservedObject var session: VNCSession
+    @ObservedObject var settings: SettingsStore
     let onClose: () -> Void
     @State private var showKeyboard = false
+    @State private var isToolbarCollapsed = false
+    @Environment(\.scenePhase) private var scenePhase
+
+    private var isShowingScreen: Bool { session.state == .connected && session.frame != nil }
 
     var body: some View {
         ZStack {
@@ -21,8 +26,12 @@ struct SessionView: View {
                 SessionStatusView(session: session, onClose: onClose)
             }
             VStack(spacing: 0) {
-                SessionToolbar(session: session, showKeyboard: $showKeyboard, onClose: onClose)
+                SessionToolbar(session: session, showKeyboard: $showKeyboard,
+                               isCollapsed: $isToolbarCollapsed, onClose: onClose)
                 Spacer()
+                if isShowingScreen, !settings.hasSeenGestureTips {
+                    GestureTipsView { settings.hasSeenGestureTips = true }
+                }
                 if showKeyboard, session.state == .connected {
                     KeyboardBar(session: session)
                 }
@@ -41,6 +50,11 @@ struct SessionView: View {
                 .interactiveDismissDisabled()
         }
         .onAppear { session.connect() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active, ReconnectPolicy.shouldReconnect(after: session.state, userDisconnected: false) {
+                session.retry()
+            }
+        }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
     }

@@ -77,6 +77,10 @@ final class HostsFeatureTests: AcceptanceTests {
 /// Controlling the remote screen
 final class SessionControlsFeatureTests: AcceptanceTests {
 
+    func test_A_first_connection_explains_the_touch_controls() {
+        runScenario(feature: "session_controls.feature", scenario: "A first connection explains the touch controls")
+    }
+
     func test_Tapping_the_screen_clicks() {
         runScenario(feature: "session_controls.feature", scenario: "Tapping the screen clicks")
     }
@@ -87,6 +91,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
 
     func test_Modifiers_stay_held_until_the_next_key() {
         runScenario(feature: "session_controls.feature", scenario: "Modifiers stay held until the next key")
+    }
+
+    func test_The_controls_can_be_tucked_away_for_a_full_bleed_screen() {
+        runScenario(feature: "session_controls.feature", scenario: "The controls can be tucked away for a full-bleed screen")
     }
 
 }

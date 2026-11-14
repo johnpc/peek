@@ -34,6 +34,7 @@ final class ViewRenderTests: XCTestCase {
         render(HostRow(host: SavedHost(name: "A", hostname: "a", rememberPassword: true)))
         render(EmptyHostsView())
         render(List { NearbySection(nearby: [MockMode.fixtureNearby]) { _ in } })
+        render(List { NearbySearchingRow() })
     }
 
     func testEditorAndSettings() {
@@ -46,15 +47,21 @@ final class ViewRenderTests: XCTestCase {
         let env = environment()
         let host = env.hosts.hosts[0]
         let session = env.makeSession(for: host)
-        render(SessionView(session: session, onClose: {}))
+        render(SessionView(session: session, settings: env.settings, onClose: {}))
         XCTAssertNotNil(session.credentialRequest)
         render(CredentialSheet(session: session))
         session.submitCredential(username: "john", password: "secret", remember: false)
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
         XCTAssertNotNil(session.frame)
-        render(SessionView(session: session, onClose: {}))
+        render(SessionView(session: session, settings: env.settings, onClose: {}))
+        var dismissed = false
+        render(GestureTipsView { dismissed = true })
+        XCTAssertFalse(dismissed)
+        Haptics.click()
+        Haptics.dragStart()
         render(KeyboardBar(session: session))
-        render(SessionToolbar(session: session, showKeyboard: .constant(true), onClose: {}))
+        render(SessionToolbar(session: session, showKeyboard: .constant(true), isCollapsed: .constant(false), onClose: {}))
+        render(SessionToolbar(session: session, showKeyboard: .constant(false), isCollapsed: .constant(true), onClose: {}))
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
         session.retry()

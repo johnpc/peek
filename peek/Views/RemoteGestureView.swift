@@ -48,6 +48,7 @@ final class RemoteGestureUIView: UIView {
     required init?(coder: NSCoder) { nil }
 
     @objc func tapped(_ recognizer: UIGestureRecognizer) {
+        Haptics.click()
         onGesture?(.tap(recognizer.location(in: self)))
     }
 
@@ -56,13 +57,16 @@ final class RemoteGestureUIView: UIView {
     }
 
     @objc func secondaryTapped(_ recognizer: UIGestureRecognizer) {
+        Haptics.click()
         onGesture?(.secondaryTap(recognizer.location(in: self)))
     }
 
     @objc func dragged(_ recognizer: UIGestureRecognizer) {
         let point = recognizer.location(in: self)
         switch recognizer.state {
-        case .began: onGesture?(.dragBegan(point))
+        case .began:
+            Haptics.dragStart()
+            onGesture?(.dragBegan(point))
         case .changed: onGesture?(.dragMoved(point))
         case .ended, .cancelled, .failed: onGesture?(.dragEnded(point))
         default: break

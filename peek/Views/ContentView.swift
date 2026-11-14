@@ -20,7 +20,7 @@ struct ContentView: View {
             SettingsView(settings: environment.settings)
         }
         .fullScreenCover(item: $model.session) { session in
-            SessionView(session: session, onClose: model.closeSession)
+            SessionView(session: session, settings: environment.settings, onClose: model.closeSession)
         }
     }
 }

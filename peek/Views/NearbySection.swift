@@ -37,3 +37,21 @@ struct NearbySection: View {
         }
     }
 }
+
+/// Shown under the saved list while nothing nearby has been found yet.
+struct NearbySearchingRow: View {
+    var body: some View {
+        Section {
+            HStack(spacing: 12) {
+                ProgressView()
+                Text("Looking for Macs with Screen Sharing on…")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("nearbySearching")
+        } header: {
+            Text("Nearby")
+        }
+    }
+}

@@ -121,11 +121,14 @@ struct SettingsStoreTests {
         #expect(settings.colorDepth == 24)
         #expect(settings.isShared)
         #expect(settings.isScalingEnabled)
+        #expect(!settings.hasSeenGestureTips)
+        settings.hasSeenGestureTips = true
         settings.colorDepth = 16
         settings.isShared = false
         settings.isScalingEnabled = false
         let reloaded = SettingsStore(defaults: defaults)
         #expect(reloaded.options == DesktopOptions(colorDepth: 16, isShared: false, isScalingEnabled: false))
+        #expect(reloaded.hasSeenGestureTips)
     }
 
     @Test func rejectsUnknownDepth() {

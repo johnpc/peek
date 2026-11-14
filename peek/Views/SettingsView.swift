@@ -27,6 +27,10 @@ struct SettingsView: View {
                 } footer: {
                     Text("Sharing keeps anyone already connected on the Mac instead of disconnecting them.")
                 }
+                Section("Help") {
+                    Button("Show the touch controls tip again") { settings.hasSeenGestureTips = false }
+                        .disabled(!settings.hasSeenGestureTips)
+                }
                 Section("About") {
                     LabeledContent("Version", value: SettingsView.version)
                     Link("Remote desktop engine: RoyalVNCKit (MIT)",

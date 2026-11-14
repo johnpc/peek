@@ -132,3 +132,13 @@ struct FrameThrottleTests {
         #expect(flushed)
     }
 }
+
+struct ReconnectPolicyTests {
+    @Test func reconnectsOnlyAfterDroppedConnections() {
+        #expect(ReconnectPolicy.shouldReconnect(after: .disconnected(.connection("dropped")), userDisconnected: false))
+        #expect(!ReconnectPolicy.shouldReconnect(after: .disconnected(.authentication("bad")), userDisconnected: false))
+        #expect(!ReconnectPolicy.shouldReconnect(after: .disconnected(nil), userDisconnected: false))
+        #expect(!ReconnectPolicy.shouldReconnect(after: .connected, userDisconnected: false))
+        #expect(!ReconnectPolicy.shouldReconnect(after: .disconnected(.connection("x")), userDisconnected: true))
+    }
+}

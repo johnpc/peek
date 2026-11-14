@@ -27,6 +27,8 @@ is what it was built for.
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings | ✅ |
+| First-connect touch-controls tip, haptic clicks | ✅ |
+| Auto-reconnect when you come back to the app after a drop | ✅ |
 | Clipboard sync | ⬜ |
 | Hardware keyboard & trackpad on iPad | ⬜ |
 | Wake-on-LAN | ⬜ |

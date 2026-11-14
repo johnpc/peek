@@ -28,6 +28,9 @@ enum StepDefinitions {
             XCTAssertTrue(any.waitForExistence(timeout: medium), "“\(text)” should be visible")
         }
         r.define("I tap \"(.+)\"") { w in tap(w.app.buttons[w.capture()]) }
+        r.define("the \"(.+)\" button should not be visible") { w in
+            XCTAssertTrue(waitUntilGone(w.app.buttons[w.capture()]))
+        }
         r.define("the \"(.+)\" button should be disabled") { w in
             let button = w.app.buttons[w.capture()]
             XCTAssertTrue(button.waitForExistence(timeout: short))
@@ -92,6 +95,10 @@ enum StepDefinitions {
             XCTAssertEqual(status.label, w.capture())
         }
         r.define("I tap the remote screen") { w in remoteScreen(w).tap() }
+        r.define("I dismiss the controls tip") { w in tap(w.app.buttons["Got it"]) }
+        r.define("the controls tip should be gone") { w in
+            XCTAssertTrue(waitUntilGone(w.app.buttons["Got it"]))
+        }
         r.define("the last input should be a left click") { w in
             XCTAssertTrue(waitUntil { (remoteScreen(w).value as? String)?.hasPrefix("click left") == true },
                           "remote screen value was \(String(describing: remoteScreen(w).value))")
