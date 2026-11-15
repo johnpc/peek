@@ -6,6 +6,7 @@ import UIKit
 /// when it never can be, because Local Network access was declined.
 struct NearbyStatusRow: View {
     let status: DiscoveryStatus
+    var onHelp: () -> Void = {}
 
     var body: some View {
         Section {
@@ -19,6 +20,8 @@ struct NearbyStatusRow: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("nearbySearching")
+                Button("Can't see your Mac?", action: onHelp)
+                    .font(.footnote.weight(.semibold))
             case .localNetworkDenied:
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Local Network access is off", systemImage: "wifi.slash")

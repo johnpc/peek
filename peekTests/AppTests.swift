@@ -51,6 +51,15 @@ struct AppEnvironmentTests {
         #expect(desktop is RoyalVNCDesktop)
     }
 
+    @Test func sessionsWriteToTheSharedLog() {
+        let env = MockMode.environment(["--uitest-mock", "--uitest-saved-password"])
+        let session = env.makeSession(for: env.hosts.hosts[0])
+        session.connect()
+        #expect(env.log.lines.contains { $0.contains("connecting to studio.local") })
+        #expect(env.log.lines.contains { $0.contains("Connected") })
+        #expect(env.log.lines.contains { $0.contains("screen 1280×800") })
+    }
+
     @Test func sessionRemembersPasswordThroughTheStore() {
         let env = MockMode.environment(["--uitest-mock"])
         let host = env.hosts.hosts[0]

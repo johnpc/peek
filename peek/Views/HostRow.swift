@@ -42,11 +42,15 @@ struct HostRow: View {
 }
 
 struct EmptyHostsView: View {
+    var onHelp: () -> Void = {}
+
     var body: some View {
         ContentUnavailableView {
             Label("No Computers Yet", systemImage: "display")
         } description: {
             Text("Add a Mac or any VNC server by address, or pick one from Nearby — Macs with Screen Sharing turned on show up there automatically.")
+        } actions: {
+            Button("Can't see your Mac?", action: onHelp)
         }
     }
 }

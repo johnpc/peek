@@ -37,6 +37,8 @@ final class ViewRenderTests: XCTestCase {
             render(HostRow(host: SavedHost(name: "A", hostname: "a"), thumbnail: UIImage(cgImage: frame)))
         }
         render(EmptyHostsView())
+        render(HelpSheet())
+        XCTAssertEqual(HelpSheet.tips.count, 5)
         render(List { NearbySection(nearby: [MockMode.fixtureNearby]) { _ in } })
         render(List { NearbyStatusRow(status: .searching) })
         render(List { NearbyStatusRow(status: .localNetworkDenied) })
@@ -46,6 +48,10 @@ final class ViewRenderTests: XCTestCase {
     func testEditorAndSettings() {
         render(HostEditorView(draft: HostDraft(), onSave: { _ in }, onCancel: {}))
         render(SettingsView(settings: environment().settings))
+        let log = ConnectionLog()
+        render(SettingsView(settings: environment().settings, log: log))
+        log.record("Studio Mac: Connected")
+        render(List { ConnectionLogSection(log: log) })
         XCTAssertFalse(SettingsView.version.isEmpty)
     }
 

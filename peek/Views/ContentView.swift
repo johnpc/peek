@@ -18,7 +18,10 @@ struct ContentView: View {
             HostEditorView(draft: draft, onSave: model.save) { model.draft = nil }
         }
         .sheet(isPresented: $model.showSettings) {
-            SettingsView(settings: environment.settings)
+            SettingsView(settings: environment.settings, log: environment.log)
+        }
+        .sheet(isPresented: $model.showHelp) {
+            HelpSheet()
         }
         .fullScreenCover(item: $model.session) { session in
             SessionView(session: session, settings: environment.settings, onClose: model.closeSession)

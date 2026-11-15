@@ -14,6 +14,12 @@ Feature: Nearby computers
     When I tap "Save"
     Then the "John's Mac mini" computer should be listed
 
+  Scenario: Help explains what to check when a Mac doesn't show up
+    Given the app is launched
+    When I tap "Help"
+    Then I should see "Can't see your Mac?"
+    And I should see "Away from home"
+
   @no-local-network
   Scenario: Declined Local Network access is explained instead of spinning forever
     Given the app is launched

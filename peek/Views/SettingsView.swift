@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
+    var log: ConnectionLog? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -32,6 +33,7 @@ struct SettingsView: View {
                     Button("Show the touch controls tip again") { settings.hasSeenGestureTips = false }
                         .disabled(!settings.hasSeenGestureTips)
                 }
+                if let log { ConnectionLogSection(log: log) }
                 Section("About") {
                     LabeledContent("Version", value: SettingsView.version)
                     Link("Remote desktop engine: RoyalVNCKit (MIT)",

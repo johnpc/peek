@@ -29,11 +29,20 @@ item ships as its own slice (spec → implement → gate → TestFlight).
    connects (or pre-fills the add form for an unknown address); the edit screen
    has "Share Shortcut Link". Follow-on (pending): add a "Mac mini" item to
    github.com/johnpc/shortcuts.
-9. **Wake-on-LAN.** Optional MAC address per host; "Wake" button when the Mac
-   is unreachable.
-10. **Remote access away from home.** No relay of our own; document the Tailscale
-    / VPN path in the app (a "Can't see your Mac?" help sheet) and make saved
-    hosts work with Tailscale `.ts.net` names.
+9. ~~**Wake-on-LAN.**~~ Dropped: sending a magic packet needs Apple's
+   multicast-networking entitlement (approval required), and the Mac mini is
+   set to never sleep. Revisit only if a Mac that sleeps shows up.
+10. ~~**Remote access away from home.**~~ Shipped as a "Can't see your Mac?"
+    help sheet (same network, Screen Sharing on, Local Network permission, add
+    by address, Tailscale/VPN for remote). Tailscale names are plain hostnames
+    and already work.
+
+## Ideas not yet scheduled
+
+- Observe-only mode (look without sending input) for checking on a long job.
+- Curtain mode (blank the Mac's physical display while connected).
+- Per-host color depth override.
+- Haptic/sound options.
 
 ## Not planned (protocol-level, outside RoyalVNCKit)
 

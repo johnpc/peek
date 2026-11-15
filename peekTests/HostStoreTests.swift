@@ -84,6 +84,23 @@ struct HostStoreTests {
     }
 }
 
+struct ConnectionLogTests {
+    @Test func recordsWithTimestampsAndCaps() {
+        let log = ConnectionLog()
+        log.now = { Date(timeIntervalSince1970: 0) }
+        log.record("hello")
+        #expect(log.lines.count == 1)
+        #expect(log.lines[0].hasSuffix(" hello"))
+        for i in 0..<(ConnectionLog.capacity + 10) { log.record("line \(i)") }
+        #expect(log.lines.count == ConnectionLog.capacity)
+        #expect(log.lines.last == log.lines.last, "no crash on overflow")
+        #expect(log.text.contains("line 209"))
+        #expect(!log.text.contains(" hello"), "oldest entries drop first")
+        log.clear()
+        #expect(log.lines.isEmpty)
+    }
+}
+
 struct ThumbnailStoreTests {
     private func makeStore() -> (ThumbnailStore, URL) {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("thumbs-\(UUID().uuidString)")

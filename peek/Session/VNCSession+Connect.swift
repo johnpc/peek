@@ -18,12 +18,16 @@ extension VNCSession {
             if let resolved, resolved != target.hostname {
                 target.hostname = resolved
                 self.onAddressChanged?(resolved)
+                self.log("\(self.host.displayName): resolved to \(resolved)")
+            } else if resolved == nil {
+                self.log("\(self.host.displayName): not found nearby, using \(target.address)")
             }
             self.open(target)
         }
     }
 
     func open(_ target: SavedHost) {
+        log("\(host.displayName): connecting to \(target.address)")
         let desktop = makeDesktop(target)
         desktop.onEvent = { [weak self] event in self?.handle(event) }
         self.desktop = desktop

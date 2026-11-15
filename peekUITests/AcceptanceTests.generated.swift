@@ -59,6 +59,10 @@ final class DiscoveryFeatureTests: AcceptanceTests {
         runScenario(feature: "discovery.feature", scenario: "Saving a nearby computer pre-fills its address")
     }
 
+    func test_Help_explains_what_to_check_when_a_Mac_doesn_t_show_up() {
+        runScenario(feature: "discovery.feature", scenario: "Help explains what to check when a Mac doesn't show up")
+    }
+
     func test_Declined_Local_Network_access_is_explained_instead_of_spinning_forever() {
         runScenario(feature: "discovery.feature", scenario: "Declined Local Network access is explained instead of spinning forever")
     }
@@ -136,6 +140,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
 
 /// Settings
 final class SettingsFeatureTests: AcceptanceTests {
+
+    func test_Settings_shows_a_connection_log_after_connecting() {
+        runScenario(feature: "settings.feature", scenario: "Settings shows a connection log after connecting")
+    }
 
     func test_Color_depth_can_be_changed() {
         runScenario(feature: "settings.feature", scenario: "Color depth can be changed")

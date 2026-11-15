@@ -6,6 +6,7 @@ extension VNCSession {
     func handle(_ event: RemoteDesktopEvent) {
         switch event {
         case .state(let next):
+            if next != state { log("\(host.displayName): \(next.label)") }
             state = next
             if next == .connected {
                 notePasteboardBaseline()
@@ -20,7 +21,10 @@ extension VNCSession {
                 credentialRequest = request
             }
         case .framebufferChanged(let size):
-            if size != screenSize { pointer.reset(to: size) }
+            if size != screenSize {
+                pointer.reset(to: size)
+                log("\(host.displayName): screen \(Int(size.width))×\(Int(size.height))")
+            }
             screenSize = size
             throttle.markDirty()
         case .framebufferUpdated:

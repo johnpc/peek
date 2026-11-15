@@ -10,6 +10,7 @@ final class AppEnvironment {
     let resolver: HostResolver
     let pasteboard: Pasteboard
     let thumbnails: ThumbnailStore
+    let log = ConnectionLog()
 
     init(hosts: HostStore,
          discovery: DiscoveryStore,
@@ -48,6 +49,7 @@ final class AppEnvironment {
         session.onRememberPassword = { [hosts] password in
             hosts.rememberPassword(password, for: host)
         }
+        session.log = { [log] in log.record($0) }
         session.onAddressChanged = { [hosts] address in
             var updated = host
             updated.hostname = address

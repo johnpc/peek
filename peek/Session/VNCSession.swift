@@ -30,6 +30,8 @@ final class VNCSession: ObservableObject, Identifiable {
     let resolver: HostResolver?
     let pasteboard: Pasteboard
     var lastSeenPasteboardChange = 0
+    /// Diary hook; the environment points it at the shared `ConnectionLog`.
+    var log: (String) -> Void = { _ in }
     let throttle: FrameThrottle
     var desktop: RemoteDesktop?
     var modifiers = ModifierLogic() { didSet { heldModifiers = modifiers.held } }

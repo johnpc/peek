@@ -36,7 +36,7 @@ is what it was built for.
 | Hardware keyboard on iPad (arrows, Esc, Tab, ⌘/⌃/⌥ shortcuts) | ✅ |
 | Trackpad / mouse on iPad: hover moves the cursor, click, right-click, scroll wheel | ✅ |
 | `peek://connect?host=…` links for Shortcuts, Siri and the Action Button (share one from a computer's edit screen) | ✅ |
-| Wake-on-LAN | ⬜ |
+| "Can't see your Mac?" help (network, permissions, Tailscale for remote access); shareable connection log in Settings | ✅ |
 
 ## Screenshots
 

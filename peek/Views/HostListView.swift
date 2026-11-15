@@ -11,7 +11,7 @@ struct HostListView: View {
         let nearby = model.nearby(discovery.nearby, saved: hosts.hosts)
         List {
             if hosts.hosts.isEmpty {
-                EmptyHostsView()
+                EmptyHostsView { model.showHelp = true }
             } else {
                 Section("Saved") {
                     ForEach(hosts.hosts) { host in
@@ -30,13 +30,16 @@ struct HostListView: View {
             if !nearby.isEmpty {
                 NearbySection(nearby: nearby) { model.add($0) }
             } else if !hosts.hosts.isEmpty || discovery.status != .searching {
-                NearbyStatusRow(status: discovery.status)
+                NearbyStatusRow(status: discovery.status) { model.showHelp = true }
             }
         }
         .navigationTitle("peek")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Settings", systemImage: "gearshape") { model.showSettings = true }
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Help", systemImage: "questionmark.circle") { model.showHelp = true }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add Computer", systemImage: "plus") { model.addHost() }

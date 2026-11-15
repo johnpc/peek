@@ -7,6 +7,7 @@ final class HostListModel: ObservableObject {
     @Published var draft: HostDraft?
     @Published var session: VNCSession?
     @Published var showSettings = false
+    @Published var showHelp = false
 
     private let environment: AppEnvironment
 

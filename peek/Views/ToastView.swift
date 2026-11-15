@@ -4,7 +4,7 @@ import SwiftUI
 struct ToastView: View {
     let text: String
     let onDismiss: () -> Void
-    static let duration: TimeInterval = 2.2
+    static let duration: TimeInterval = 3.5
 
     var body: some View {
         VStack {

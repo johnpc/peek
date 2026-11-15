@@ -25,6 +25,9 @@ enum StepDefinitions {
         r.define("I should see \"(.+)\"") { w in
             let text = w.capture()
             let any = w.app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", text)).firstMatch
+            // Lists only materialise rows near the viewport; scroll once if needed
+            // (never inside a session, where a swipe would scroll the remote Mac).
+            if !any.waitForExistence(timeout: short), !remoteScreen(w).exists { w.app.swipeUp() }
             XCTAssertTrue(any.waitForExistence(timeout: medium), "“\(text)” should be visible")
         }
         r.define("I tap \"(.+)\"") { w in tap(w.app.buttons[w.capture()]) }
@@ -41,8 +44,9 @@ enum StepDefinitions {
             let toggle = w.app.switches[w.capture()]
             XCTAssertTrue(toggle.waitForExistence(timeout: short))
             // Tap the switch knob itself: a tap on the row's label doesn't flip a SwiftUI Toggle.
-            if (toggle.value as? String) != "1" {
+            for _ in 0..<2 where (toggle.value as? String) != "1" {
                 toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+                _ = waitUntil({ (toggle.value as? String) == "1" }, timeout: 1.5)
             }
             XCTAssertTrue(waitUntil { (toggle.value as? String) == "1" },
                           "\(w.capture()) should be on, value is \(String(describing: toggle.value))")
