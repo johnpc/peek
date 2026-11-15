@@ -10,7 +10,8 @@ struct SessionView: View {
     @State private var showKeyboard = false
     @State private var isToolbarCollapsed = false
     @State private var autoCollapseArmed = true
-    @State private var zoomState = ZoomState()
+    @State private var isZoomed = false
+    @State private var fitRequest = 0
     @State private var lifecycle = SessionLifecycle()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -20,11 +21,11 @@ struct SessionView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let frame = session.frame {
-                RemoteScreenView(frame: frame, screenSize: session.screenSize,
-                                 lastAction: session.lastAction, onGesture: { gesture, transform in
+                RemoteScreenView(frame: frame, screenSize: session.screenSize, lastAction: session.lastAction,
+                                 isZoomed: $isZoomed, fitRequest: fitRequest) { gesture, transform in
                     settings.hasSeenGestureTips = true
                     session.perform(gesture, transform: transform)
-                }, zoomState: $zoomState)
+                }
                 .ignoresSafeArea(.container)
             }
             if !session.state.isActive || session.frame == nil {
@@ -33,8 +34,8 @@ struct SessionView: View {
                 ReconnectingPill()
             }
             VStack(spacing: 0) {
-                SessionToolbar(session: session, showKeyboard: $showKeyboard,
-                               isCollapsed: $isToolbarCollapsed, zoomState: $zoomState, onClose: onClose)
+                SessionToolbar(session: session, showKeyboard: $showKeyboard, isCollapsed: $isToolbarCollapsed,
+                               isZoomed: isZoomed, onFit: { fitRequest += 1 }, onClose: onClose)
                 Spacer()
                 if isShowingScreen, !settings.hasSeenGestureTips, !showKeyboard {
                     GestureTipsView { settings.hasSeenGestureTips = true }

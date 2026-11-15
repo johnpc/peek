@@ -162,10 +162,15 @@ xcodebuild test -scheme peek -destination 'platform=iOS Simulator,name=iPhone 17
 - **Modifier keysyms depend on the server** (`ModifierKeymap`): Apple Remote
   Desktop servers (detected because they ask for a username) get ⌘=`Hyper_L`,
   ⌥=`Meta_L`; everything else gets ⌘=`Super_L`, ⌥=`Alt_L`. Verified on a real
-  Mac: `Meta_L` was NOT read as ⌘ (⌘L typed a literal "l").
-- **Discovery stores the resolved IPv4 address**, not the `.local` name:
-  Network.framework has no standalone resolver, and connecting to the Bonjour
-  endpoint yields an IP. Users can edit the hostname afterwards.
+  Mac: `Meta_L` was NOT read as ⌘ (⌘L typed a literal "l"). RoyalVNCKit also
+  remaps `Super_L`→`Hyper_L` / `Alt_L`→`Meta_L` itself when the server speaks
+  RFB 003.889 (ARD), so both keymaps end up correct on a Mac; ours keeps the
+  choice explicit and testable.
+- **Discovery stores the resolved address AND the Bonjour service name.**
+  Network.framework has no standalone resolver, so the address comes from a
+  short TCP connection to the service (often IPv6 link-local with a `%en0`
+  scope — keep it, it is required to route). At connect time Nearby hosts are
+  re-resolved by name (`BonjourResolver`) and fall back to the saved address.
 - **Sticky modifiers** (tap ⌘, then a key) instead of chords — you can't hold two
   keys on a touch keyboard.
 - **The remote cursor is not drawn.** On a touchscreen the finger is the pointer.

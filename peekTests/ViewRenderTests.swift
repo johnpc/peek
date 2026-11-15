@@ -63,12 +63,10 @@ final class ViewRenderTests: XCTestCase {
         Haptics.click()
         Haptics.dragStart()
         render(KeyboardBar(session: session))
-        var zoomed = ZoomState()
-        zoomed.pinch(by: 2, centroidDelta: .zero)
         render(SessionToolbar(session: session, showKeyboard: .constant(true), isCollapsed: .constant(false),
-                              zoomState: .constant(zoomed), onClose: {}))
+                              isZoomed: true, onFit: {}, onClose: {}))
         render(SessionToolbar(session: session, showKeyboard: .constant(false), isCollapsed: .constant(true),
-                              zoomState: .constant(ZoomState()), onClose: {}))
+                              isZoomed: false, onFit: {}, onClose: {}))
         render(PasswordField(text: .constant("x"), revealed: true))
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
@@ -83,7 +81,26 @@ final class ViewRenderTests: XCTestCase {
             return XCTFail("no frame")
         }
         render(RemoteScreenView(frame: frame, screenSize: CGSize(width: 200, height: 100), lastAction: "x",
-                                onGesture: { _, _ in }, zoomState: .constant(ZoomState())))
+                                isZoomed: .constant(false), fitRequest: 1) { _, _ in })
+
+        let scroll = RemoteScreenScrollView(frame: CGRect(x: 0, y: 0, width: 400, height: 400))
+        var zoomed: [Bool] = []
+        scroll.onZoomChanged = { zoomed.append($0) }
+        scroll.display(frame, size: CGSize(width: 200, height: 100))
+        scroll.layoutIfNeeded()
+        XCTAssertEqual(scroll.fitScale, 2, "200 wide fits a 400 viewport at 2x")
+        XCTAssertEqual(scroll.minimumZoomScale, 2)
+        XCTAssertEqual(scroll.maximumZoomScale, 10)
+        XCTAssertFalse(scroll.isZoomed)
+        XCTAssertEqual(scroll.contentInset.top, 100, "centered vertically")
+        XCTAssertTrue(scroll.content.canScrollWithTwoFingers(), "two fingers scroll the Mac when fit")
+        scroll.setZoomScale(4, animated: false)
+        XCTAssertTrue(scroll.isZoomed)
+        XCTAssertFalse(scroll.content.canScrollWithTwoFingers(), "two fingers pan when zoomed")
+        XCTAssertEqual(zoomed.last, true)
+        scroll.fit()
+        scroll.display(frame, size: CGSize(width: 200, height: 100))
+        XCTAssertNil(RemoteScreenScrollView(coder: NSCoder()))
     }
 
     func testKeyInputViewForwardsTyping() {
@@ -114,27 +131,19 @@ final class ViewRenderTests: XCTestCase {
 
     func testGestureViewHandlers() {
         var gestures: [ScreenGesture] = []
-        var pinches = 0
         let view = RemoteGestureUIView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.onGesture = { gestures.append($0) }
-        view.onPinch = { _, _ in pinches += 1 }
         view.tapped(UITapGestureRecognizer())
         view.doubleTapped(UITapGestureRecognizer())
         view.secondaryTapped(UITapGestureRecognizer())
         view.dragged(UILongPressGestureRecognizer())
         view.scrolled(UIPanGestureRecognizer())
-        view.pinched(UIPinchGestureRecognizer())
         XCTAssertEqual(gestures.count, 4, "tap, double tap, secondary tap, scroll; a .possible long press sends nothing")
-        XCTAssertEqual(pinches, 1)
-        var pans = 0
-        view.onPan = { _ in pans += 1 }
-        view.isZoomed = { false }
-        view.twoFingerPanned(UIPanGestureRecognizer())
-        XCTAssertEqual(gestures.count, 5, "two fingers scroll when not zoomed")
-        view.isZoomed = { true }
-        view.twoFingerPanned(UIPanGestureRecognizer())
-        XCTAssertEqual(pans, 1, "two fingers pan the view when zoomed")
+        XCTAssertTrue(view.gestureRecognizerShouldBegin(UITapGestureRecognizer()), "other recognizers are never gated")
+        view.canScrollWithTwoFingers = { false }
+        XCTAssertFalse(view.gestureRecognizerShouldBegin(view.twoFingerScroll))
+        view.canScrollWithTwoFingers = { true }
+        XCTAssertTrue(view.gestureRecognizerShouldBegin(view.twoFingerScroll))
         XCTAssertNil(RemoteGestureUIView(coder: NSCoder()))
-        render(RemoteGestureView(onGesture: { _ in }, onPinch: { _, _ in }, onPan: { _ in }, isZoomed: { false }))
     }
 }

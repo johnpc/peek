@@ -23,7 +23,7 @@ is what it was built for.
 | Save computers by name/address/port (or `host:port`); edit, delete | ✅ |
 | Apple Remote Desktop sign-in (Mac account + password) and classic VNC passwords | ✅ |
 | Remember passwords in the iOS keychain | ✅ |
-| Live remote screen; pinch to zoom, two-finger pan while zoomed (three fingers scroll) | ✅ |
+| Live remote screen in a native zoom view: pinch around your fingers, two-finger pan while zoomed, two (or three) fingers scroll the Mac | ✅ |
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings | ✅ |

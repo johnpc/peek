@@ -1,19 +1,23 @@
 import UIKit
 
-/// The UIKit gesture layer behind `RemoteGestureView`. Recognizers only
-/// translate touches into `ScreenGesture`s; all meaning lives in `GestureLogic`.
+/// Draws the remote frame (as its layer contents) and turns touches into
+/// `ScreenGesture`s: tap = click, double tap = double click, two-finger tap =
+/// right click, long-press-and-drag = mouse drag, two fingers (when fit to
+/// screen) or three fingers = scroll. Zoom and pan belong to the enclosing
+/// `RemoteScreenScrollView`.
 final class RemoteGestureUIView: UIView {
     var onGesture: ((ScreenGesture) -> Void)?
-    var onPinch: ((CGFloat, CGSize) -> Void)?
-    /// Two-finger drag while zoomed moves the view (like Photos) instead of scrolling.
-    var onPan: ((CGSize) -> Void)?
-    var isZoomed: () -> Bool = { false }
+    /// Whether a two-finger drag should scroll the remote (true) or be left to
+    /// the scroll view for panning (false). Set by `RemoteScreenScrollView`.
+    var canScrollWithTwoFingers: () -> Bool = { true }
+    let twoFingerScroll = UIPanGestureRecognizer()
     private var scroll = ScrollAccumulator()
-    private var lastPinchCentroid: CGPoint = .zero
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         isMultipleTouchEnabled = true
+        layer.contentsGravity = .resize
+        layer.magnificationFilter = .nearest
         let tap = UITapGestureRecognizer(target: self, action: #selector(tapped))
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTapped))
         doubleTap.numberOfTapsRequired = 2
@@ -22,14 +26,13 @@ final class RemoteGestureUIView: UIView {
         twoFingerTap.numberOfTouchesRequired = 2
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(dragged))
         longPress.minimumPressDuration = 0.35
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(twoFingerPanned))
-        pan.minimumNumberOfTouches = 2
-        pan.maximumNumberOfTouches = 2
-        let threeFingerPan = UIPanGestureRecognizer(target: self, action: #selector(scrolled))
-        threeFingerPan.minimumNumberOfTouches = 3
-        threeFingerPan.maximumNumberOfTouches = 3
-        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinched))
-        [tap, doubleTap, twoFingerTap, longPress, pan, threeFingerPan, pinch].forEach(addGestureRecognizer)
+        twoFingerScroll.addTarget(self, action: #selector(scrolled))
+        twoFingerScroll.minimumNumberOfTouches = 2
+        twoFingerScroll.maximumNumberOfTouches = 2
+        let threeFingerScroll = UIPanGestureRecognizer(target: self, action: #selector(scrolled))
+        threeFingerScroll.minimumNumberOfTouches = 3
+        threeFingerScroll.maximumNumberOfTouches = 3
+        [tap, doubleTap, twoFingerTap, longPress, twoFingerScroll, threeFingerScroll].forEach(addGestureRecognizer)
     }
 
     required init?(coder: NSCoder) { nil }
@@ -60,14 +63,6 @@ final class RemoteGestureUIView: UIView {
         }
     }
 
-    /// Zoomed: pan the view. Fit to screen: scroll the remote machine.
-    @objc func twoFingerPanned(_ recognizer: UIPanGestureRecognizer) {
-        guard isZoomed() else { return scrolled(recognizer) }
-        let translation = recognizer.translation(in: self)
-        recognizer.setTranslation(.zero, in: self)
-        onPan?(CGSize(width: translation.x, height: translation.y))
-    }
-
     @objc func scrolled(_ recognizer: UIPanGestureRecognizer) {
         if recognizer.state == .began { scroll.reset() }
         let translation = recognizer.translation(in: self)
@@ -75,13 +70,11 @@ final class RemoteGestureUIView: UIView {
         recognizer.setTranslation(.zero, in: self)
         onGesture?(.scroll(steps: CGSize(width: steps.dx, height: steps.dy), at: recognizer.location(in: self)))
     }
+}
 
-    @objc func pinched(_ recognizer: UIPinchGestureRecognizer) {
-        let centroid = recognizer.location(in: self)
-        if recognizer.state == .began { lastPinchCentroid = centroid }
-        let delta = CGSize(width: centroid.x - lastPinchCentroid.x, height: centroid.y - lastPinchCentroid.y)
-        lastPinchCentroid = centroid
-        onPinch?(recognizer.scale, delta)
-        recognizer.scale = 1
+extension RemoteGestureUIView {
+    /// UIView asks this for recognizers without a delegate of their own.
+    override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+        recognizer !== twoFingerScroll || canScrollWithTwoFingers()
     }
 }

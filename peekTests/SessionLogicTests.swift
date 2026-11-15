@@ -59,28 +59,6 @@ struct ScreenGeometryTests {
     }
 }
 
-struct ZoomStateTests {
-    @Test func clampsZoomAndPansOnlyWhenZoomed() {
-        var state = ZoomState()
-        state.pinch(by: 0.5, centroidDelta: CGSize(width: 10, height: 10))
-        #expect(state.zoom == 1)
-        #expect(state.pan == .zero)
-        state.pinch(by: 2, centroidDelta: CGSize(width: 10, height: -5))
-        #expect(state.zoom == 2)
-        #expect(state.pan == CGSize(width: 10, height: -5))
-        state.pan(by: CGSize(width: 5, height: 5))
-        #expect(state.pan == CGSize(width: 15, height: 0))
-        state.pinch(by: 100, centroidDelta: .zero)
-        #expect(state.zoom == ZoomState.maximum)
-        var flat = ZoomState()
-        flat.pan(by: CGSize(width: 9, height: 9))
-        #expect(flat.pan == .zero, "panning only applies when zoomed")
-        #expect(state.isZoomed)
-        state.reset()
-        #expect(state == ZoomState())
-    }
-}
-
 struct ScrollAccumulatorTests {
     @Test func emitsWholeStepsAndKeepsRemainder() {
         var scroll = ScrollAccumulator(pointsPerStep: 10)
