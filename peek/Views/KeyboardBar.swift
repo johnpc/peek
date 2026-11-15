@@ -11,7 +11,7 @@ struct KeyboardBar: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Color.clear.frame(width: 1).id("start")
                     if showFunctionKeys {
                     ForEach(KeyChord.functionKeys) { key in
@@ -52,14 +52,14 @@ struct KeyboardBar: View {
         ForEach(Modifier.allCases, id: \.self) { modifier in
             let held = session.heldModifiers.contains(modifier)
             Button(modifier.symbol) { session.toggle(modifier) }
-                .buttonStyle(KeyButtonStyle(highlighted: held))
+                .buttonStyle(KeyButtonStyle(highlighted: held, compact: true))
                 .accessibilityIdentifier("key-\(modifier.symbol)")
                 .accessibilityValue(held ? "held" : "released")
         }
         Divider().frame(height: 24)
         ForEach(RemoteKey.barKeys, id: \.self) { key in
             Button(key.label) { session.press(key) }
-                .buttonStyle(KeyButtonStyle(highlighted: false))
+                .buttonStyle(KeyButtonStyle(highlighted: false, compact: key.label.count == 1))
                 .accessibilityIdentifier("key-\(key.label)")
         }
         Divider().frame(height: 24)
@@ -72,11 +72,13 @@ struct KeyboardBar: View {
 
 struct KeyButtonStyle: ButtonStyle {
     let highlighted: Bool
+    /// Single-glyph keys (⌘, arrows) need less side padding, so more fit on a phone.
+    var compact = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.monospaced())
-            .padding(.horizontal, 12)
+            .padding(.horizontal, compact ? 8 : 12)
             .padding(.vertical, 8)
             .background(highlighted ? Color.accentColor : Color(.secondarySystemBackground),
                         in: RoundedRectangle(cornerRadius: 8))
