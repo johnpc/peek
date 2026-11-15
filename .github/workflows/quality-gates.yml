@@ -39,6 +39,20 @@ jobs:
       - name: Verify generated acceptance tests match .feature files
         run: python3 scripts/generate_acceptance_tests.py --check
 
+      - name: Invalidate the persistent build cache when the project file changes
+        run: |
+          # Incremental DerivedData survives target/phase changes badly (stale
+          # test hosts, missing embedded frameworks). Key it on the pbxproj.
+          mkdir -p "$DERIVED" "$SPM"
+          STAMP="$DERIVED/../pbxproj.sha"
+          NEW=$(shasum -a 256 peek.xcodeproj/project.pbxproj | cut -d' ' -f1)
+          if [ "$(cat "$STAMP" 2>/dev/null)" != "$NEW" ]; then
+            echo "project file changed — clearing $DERIVED"
+            rm -rf "$DERIVED"
+            mkdir -p "$DERIVED"
+            echo "$NEW" > "$STAMP"
+          fi
+
       - name: Build for testing
         run: |
           xcodebuild build-for-testing \
