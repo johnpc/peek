@@ -57,7 +57,7 @@ struct KeyboardBar: View {
                 .accessibilityValue(held ? "held" : "released")
         }
         Divider().frame(height: 24)
-        ForEach(RemoteKey.allCases, id: \.self) { key in
+        ForEach(RemoteKey.barKeys, id: \.self) { key in
             Button(key.label) { session.press(key) }
                 .buttonStyle(KeyButtonStyle(highlighted: false))
                 .accessibilityIdentifier("key-\(key.label)")

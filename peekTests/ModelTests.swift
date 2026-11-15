@@ -91,6 +91,9 @@ struct RemoteInputTests {
         #expect(RemoteKey.delete.keysym == KeySym.backspace)
         #expect(RemoteKey.forwardDelete.keysym == KeySym.delete)
         #expect(RemoteKey.return.label == "return")
+        #expect(!RemoteKey.barKeys.contains(.return) && !RemoteKey.barKeys.contains(.delete),
+                "the system keyboard already has return and backspace")
+        #expect(RemoteKey.barKeys.contains(.forwardDelete) && RemoteKey.barKeys.contains(.leftArrow))
         #expect(RemoteKey.upArrow.keysym == KeySym.up)
         #expect(RemoteKey.downArrow.keysym == KeySym.down)
         #expect(RemoteKey.leftArrow.keysym == KeySym.left)
