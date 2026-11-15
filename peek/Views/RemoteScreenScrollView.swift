@@ -8,6 +8,7 @@ import UIKit
 final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
     static let maximumMagnification: CGFloat = 5
     let content = RemoteGestureUIView()
+    let cursorLayer = CALayer()
     var onZoomChanged: ((Bool) -> Void)?
     private(set) var screenSize: CGSize = .zero
 
@@ -78,6 +79,7 @@ final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
 
     func scrollViewDidZoom(_ scrollView: UIScrollView) {
         center()
+        updateCursorScale()
         onZoomChanged?(isZoomed)
     }
 }

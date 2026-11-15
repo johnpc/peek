@@ -63,10 +63,10 @@ final class ViewRenderTests: XCTestCase {
         Haptics.click()
         Haptics.dragStart()
         render(KeyboardBar(session: session))
-        render(SessionToolbar(session: session, showKeyboard: .constant(true), isCollapsed: .constant(false),
-                              isZoomed: true, onFit: {}, onClose: {}))
-        render(SessionToolbar(session: session, showKeyboard: .constant(false), isCollapsed: .constant(true),
-                              isZoomed: false, onFit: {}, onClose: {}))
+        render(SessionToolbar(session: session, settings: env.settings, showKeyboard: .constant(true),
+                              isCollapsed: .constant(false), isZoomed: true, onFit: {}, onClose: {}))
+        render(SessionToolbar(session: session, settings: env.settings, showKeyboard: .constant(false),
+                              isCollapsed: .constant(true), isZoomed: false, onFit: {}, onClose: {}))
         render(PasswordField(text: .constant("x"), revealed: true))
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
@@ -85,6 +85,8 @@ final class ViewRenderTests: XCTestCase {
             return XCTFail("no frame")
         }
         render(RemoteScreenView(frame: frame, screenSize: CGSize(width: 200, height: 100), lastAction: "x",
+                                cursor: MockFrame.cursor().map { RemoteCursor(image: $0, hotspot: CGPoint(x: 2, y: 2)) },
+                                pointer: CGPoint(x: 50, y: 50), pointerMode: .touchpad,
                                 isZoomed: .constant(false), fitRequest: 1) { _, _ in })
 
         let scroll = RemoteScreenScrollView(frame: CGRect(x: 0, y: 0, width: 400, height: 400))
@@ -98,7 +100,15 @@ final class ViewRenderTests: XCTestCase {
         XCTAssertFalse(scroll.isZoomed)
         XCTAssertEqual(scroll.contentInset.top, 100, "centered vertically")
         XCTAssertTrue(scroll.content.canScrollWithTwoFingers(), "two fingers scroll the Mac when fit")
+        if let arrow = MockFrame.cursor() {
+            scroll.showCursor(RemoteCursor(image: arrow, hotspot: CGPoint(x: 2, y: 2)), at: CGPoint(x: 100, y: 50))
+            XCTAssertFalse(scroll.cursorLayer.isHidden)
+            XCTAssertEqual(scroll.cursorLayer.position, CGPoint(x: 100, y: 50))
+            scroll.showCursor(nil, at: .zero)
+            XCTAssertTrue(scroll.cursorLayer.isHidden)
+        }
         scroll.setZoomScale(4, animated: false)
+        XCTAssertEqual(scroll.cursorLayer.transform.m11, 0.25, accuracy: 0.001, "cursor counter-scales with zoom")
         XCTAssertTrue(scroll.isZoomed)
         XCTAssertFalse(scroll.content.canScrollWithTwoFingers(), "two fingers pan when zoomed")
         XCTAssertEqual(zoomed.last, true)
@@ -193,6 +203,16 @@ final class ViewRenderTests: XCTestCase {
         XCTAssertTrue(view.gestureRecognizerShouldBegin(UITapGestureRecognizer()), "other recognizers are never gated")
         view.hovered(UIHoverGestureRecognizer())
         XCTAssertEqual(gestures.count, 4, "a .possible hover sends nothing")
+        view.pointerMode = .touchpad
+        view.tapped(UITapGestureRecognizer())
+        XCTAssertEqual(gestures.last, .clickAtPointer(.left, count: 1))
+        view.doubleTapped(UITapGestureRecognizer())
+        XCTAssertEqual(gestures.last, .clickAtPointer(.left, count: 2))
+        view.dragged(UILongPressGestureRecognizer())
+        view.touchpadPanned(UIPanGestureRecognizer())
+        XCTAssertTrue(view.gestureRecognizerShouldBegin(view.touchpadPan))
+        view.pointerMode = .direct
+        XCTAssertFalse(view.gestureRecognizerShouldBegin(view.touchpadPan))
         let swipe = UISwipeGestureRecognizer(); swipe.direction = .up
         view.swiped(swipe)
         XCTAssertEqual(gestures.last, .swipe(.up))

@@ -6,7 +6,7 @@ import Foundation
 /// behaviour is observable without a real server.
 extension VNCSession {
     func perform(_ gesture: ScreenGesture, transform: ScreenTransform) {
-        let inputs = GestureLogic.inputs(for: gesture, transform: transform, screen: screenSize)
+        let inputs = GestureLogic.inputs(for: gesture, transform: transform, screen: screenSize, pointer: pointer)
         guard !inputs.isEmpty else { return }
         send(inputs, action: VNCSession.describe(gesture, inputs: inputs))
     }
@@ -40,7 +40,10 @@ extension VNCSession {
     }
 
     private func send(_ inputs: [RemoteInput], action: String) {
-        inputs.forEach { desktop?.send($0) }
+        for input in inputs {
+            desktop?.send(input)
+            pointer.observe(input)
+        }
         lastAction = action
     }
 
@@ -55,6 +58,10 @@ extension VNCSession {
         case .scroll(let steps, _): return "scroll \(Int(steps.width)),\(Int(steps.height))"
         case .hover: return "move" + location(inputs)
         case .swipe(let direction): return "swipe \(direction.name)"
+        case .pointerMoved: return "move" + location(inputs)
+        case .clickAtPointer(let button, let count): return (count > 1 ? "double click" : "click \(button.name)") + location(inputs)
+        case .dragBeganAtPointer: return "drag start" + location(inputs)
+        case .dragEndedAtPointer: return "drag end" + location(inputs)
         }
     }
 

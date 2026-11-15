@@ -121,6 +121,8 @@ struct SettingsStoreTests {
         #expect(settings.colorDepth == 24)
         #expect(settings.isShared)
         #expect(settings.syncsClipboard)
+        #expect(settings.pointerMode == .direct)
+        settings.pointerMode = .touchpad
         #expect(!settings.hasSeenGestureTips)
         settings.hasSeenGestureTips = true
         settings.colorDepth = 16
@@ -129,6 +131,7 @@ struct SettingsStoreTests {
         let reloaded = SettingsStore(defaults: defaults)
         #expect(reloaded.options == DesktopOptions(colorDepth: 16, isShared: false, syncsClipboard: false))
         #expect(reloaded.hasSeenGestureTips)
+        #expect(reloaded.pointerMode == .touchpad)
     }
 
     @Test func rejectsUnknownDepth() {

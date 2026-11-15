@@ -6,14 +6,17 @@ struct RemoteScreenView: View {
     let frame: CGImage
     let screenSize: CGSize
     let lastAction: String?
+    var cursor: RemoteCursor? = nil
+    var pointer: CGPoint = .zero
+    var pointerMode: PointerMode = .direct
     @Binding var isZoomed: Bool
     /// Bump to ask the view to zoom back out to fit.
     var fitRequest: Int = 0
     let onGesture: (ScreenGesture, ScreenTransform) -> Void
 
     var body: some View {
-        RemoteScreenHost(frame: frame, screenSize: screenSize, isZoomed: $isZoomed,
-                         fitRequest: fitRequest, onGesture: onGesture)
+        RemoteScreenHost(frame: frame, screenSize: screenSize, cursor: cursor, pointer: pointer,
+                         pointerMode: pointerMode, isZoomed: $isZoomed, fitRequest: fitRequest, onGesture: onGesture)
             .accessibilityElement(children: .ignore)
             .accessibilityIdentifier("remoteScreen")
             .accessibilityLabel("Remote screen \(Int(screenSize.width))×\(Int(screenSize.height))")
@@ -25,6 +28,9 @@ struct RemoteScreenView: View {
 struct RemoteScreenHost: UIViewRepresentable {
     let frame: CGImage
     let screenSize: CGSize
+    let cursor: RemoteCursor?
+    let pointer: CGPoint
+    let pointerMode: PointerMode
     @Binding var isZoomed: Bool
     let fitRequest: Int
     let onGesture: (ScreenGesture, ScreenTransform) -> Void
@@ -45,6 +51,8 @@ struct RemoteScreenHost: UIViewRepresentable {
     func updateUIView(_ view: RemoteScreenScrollView, context: Context) {
         wire(view)
         view.display(frame, size: screenSize)
+        view.content.pointerMode = pointerMode
+        view.showCursor(cursor, at: pointer)
         if context.coordinator.fitRequest != fitRequest {
             context.coordinator.fitRequest = fitRequest
             view.fit()

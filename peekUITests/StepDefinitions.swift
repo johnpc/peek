@@ -101,6 +101,23 @@ enum StepDefinitions {
             XCTAssertEqual(status.label, w.capture())
         }
         r.define("I tap the remote screen") { w in remoteScreen(w).tap() }
+        r.define("I switch to touchpad mode") { w in
+            tap(w.app.buttons["pointerMode"])
+            XCTAssertTrue(waitUntil { (w.app.buttons["pointerMode"].value as? String) == "touchpad" })
+        }
+        r.define("I drag one finger across the remote screen") { w in
+            let screen = remoteScreen(w)
+            let start = screen.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
+            let end = screen.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .fast, thenHoldForDuration: 0.1)
+        }
+        r.define("the last input should be a left click to the right of center") { w in
+            XCTAssertTrue(waitUntil {
+                guard let value = remoteScreen(w).value as? String, value.hasPrefix("click left at ") else { return false }
+                let parts = value.dropFirst("click left at ".count).split(separator: ",").compactMap { Int($0) }
+                return parts.count == 2 && parts[0] > 700 && abs(parts[1] - 400) < 60
+            }, "remote screen value was \(String(describing: remoteScreen(w).value))")
+        }
         r.define("I pinch to zoom in on the remote screen") { w in
             remoteScreen(w).pinch(withScale: 3, velocity: 2)
         }

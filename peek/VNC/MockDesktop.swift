@@ -64,6 +64,7 @@ final class MockDesktop: RemoteDesktop {
         emit(.state(.connected))
         emit(.framebufferChanged(screenSize))
         emit(.framebufferUpdated)
+        if let arrow = MockFrame.cursor() { emit(.cursorChanged(RemoteCursor(image: arrow, hotspot: CGPoint(x: 2, y: 2)))) }
     }
 
     private func emit(_ event: RemoteDesktopEvent) {

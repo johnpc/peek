@@ -14,6 +14,12 @@ enum ScreenGesture: Equatable {
     case hover(CGPoint)
     /// Three-finger flick, mapped to the macOS trackpad gesture it mimics.
     case swipe(SwipeDirection)
+    /// Touchpad mode: the finger moved the pointer by this much (view points).
+    case pointerMoved(by: CGSize)
+    /// Touchpad mode: click (1) or double-click (2) wherever the pointer is.
+    case clickAtPointer(MouseButton, count: Int)
+    case dragBeganAtPointer
+    case dragEndedAtPointer
 }
 
 enum SwipeDirection: Equatable, CaseIterable {
@@ -42,7 +48,8 @@ enum SwipeDirection: Equatable, CaseIterable {
 
 /// Pure translation from gestures to the mouse events a VNC server expects.
 enum GestureLogic {
-    static func inputs(for gesture: ScreenGesture, transform: ScreenTransform, screen: CGSize) -> [RemoteInput] {
+    static func inputs(for gesture: ScreenGesture, transform: ScreenTransform, screen: CGSize,
+                       pointer: PointerTracker = PointerTracker()) -> [RemoteInput] {
         func pixel(_ point: CGPoint) -> (x: Int, y: Int) {
             ScreenGeometry.framebufferPoint(point, transform: transform, screen: screen)
         }
@@ -73,6 +80,8 @@ enum GestureLogic {
         case .swipe(let direction):
             return [.keyDown(KeySym.controlLeft), .keyDown(direction.keysym),
                     .keyUp(direction.keysym), .keyUp(KeySym.controlLeft)]
+        case .pointerMoved, .clickAtPointer, .dragBeganAtPointer, .dragEndedAtPointer:
+            return touchpadInputs(for: gesture, screen: screen, pointer: pointer)
         }
     }
 

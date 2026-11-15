@@ -10,6 +10,7 @@ final class SettingsStore: ObservableObject {
     @Published var isShared: Bool { didSet { defaults.set(isShared, forKey: Keys.isShared) } }
     @Published var syncsClipboard: Bool { didSet { defaults.set(syncsClipboard, forKey: Keys.clipboard) } }
     @Published var hasSeenGestureTips: Bool { didSet { defaults.set(hasSeenGestureTips, forKey: Keys.tips) } }
+    @Published var pointerMode: PointerMode { didSet { defaults.set(pointerMode.rawValue, forKey: Keys.pointerMode) } }
 
     private let defaults: UserDefaults
 
@@ -18,6 +19,7 @@ final class SettingsStore: ObservableObject {
         static let isShared = "peek.settings.isShared"
         static let tips = "peek.settings.hasSeenGestureTips"
         static let clipboard = "peek.settings.syncsClipboard"
+        static let pointerMode = "peek.settings.pointerMode"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -27,6 +29,7 @@ final class SettingsStore: ObservableObject {
         isShared = defaults.object(forKey: Keys.isShared) as? Bool ?? true
         hasSeenGestureTips = defaults.bool(forKey: Keys.tips)
         syncsClipboard = defaults.object(forKey: Keys.clipboard) as? Bool ?? true
+        pointerMode = PointerMode(rawValue: defaults.string(forKey: Keys.pointerMode) ?? "") ?? .direct
     }
 
     var options: DesktopOptions {

@@ -23,6 +23,8 @@ struct SessionView: View {
             Color.black.ignoresSafeArea()
             if let frame = session.frame {
                 RemoteScreenView(frame: frame, screenSize: session.screenSize, lastAction: session.lastAction,
+                                 cursor: session.cursor, pointer: session.pointer.position,
+                                 pointerMode: settings.pointerMode,
                                  isZoomed: $isZoomed, fitRequest: fitRequest) { gesture, transform in
                     settings.hasSeenGestureTips = true
                     session.perform(gesture, transform: transform)
@@ -38,8 +40,9 @@ struct SessionView: View {
                 ToastView(text: toast) { session.toast = nil }
             }
             VStack(spacing: 0) {
-                SessionToolbar(session: session, showKeyboard: $showKeyboard, isCollapsed: $isToolbarCollapsed,
-                               isZoomed: isZoomed, onFit: { fitRequest += 1 }, onClose: onClose)
+                SessionToolbar(session: session, settings: settings, showKeyboard: $showKeyboard,
+                               isCollapsed: $isToolbarCollapsed, isZoomed: isZoomed,
+                               onFit: { fitRequest += 1 }, onClose: onClose)
                 Spacer()
                 if isShowingScreen, !settings.hasSeenGestureTips, !showKeyboard {
                     GestureTipsView { settings.hasSeenGestureTips = true }

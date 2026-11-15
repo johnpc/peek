@@ -21,6 +21,19 @@ enum MockFrame {
         return image.cgImage
     }
 
+    /// A simple arrow pointer, like the one a Mac sends.
+    static func cursor() -> CGImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 16, height: 24), format: format).image { _ in
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: 2, y: 2)); path.addLine(to: CGPoint(x: 2, y: 20))
+            path.addLine(to: CGPoint(x: 7, y: 15)); path.addLine(to: CGPoint(x: 14, y: 14)); path.close()
+            UIColor.black.setFill(); path.fill()
+            UIColor.white.setStroke(); path.lineWidth = 1.5; path.stroke()
+        }.cgImage
+    }
+
     private static func drawWallpaper(in cg: CGContext, size: CGSize) {
         let colors = [UIColor(red: 0.10, green: 0.16, blue: 0.36, alpha: 1).cgColor,
                       UIColor(red: 0.55, green: 0.22, blue: 0.48, alpha: 1).cgColor]

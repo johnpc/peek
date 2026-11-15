@@ -10,10 +10,14 @@ final class VNCSession: ObservableObject, Identifiable {
 
     @Published var state: RemoteState = .idle
     @Published var frame: CGImage?
-    @Published private(set) var screenSize: CGSize = .zero
+    @Published var screenSize: CGSize = .zero
     @Published var credentialRequest: CredentialRequest?
     @Published var lastAction: String?
     @Published private(set) var heldModifiers: Set<Modifier> = []
+    /// The Mac's pointer image (nil until the server sends one).
+    @Published var cursor: RemoteCursor?
+    /// Where the Mac's pointer is, in framebuffer pixels.
+    @Published var pointer = PointerTracker()
     /// Short-lived notice for the session screen ("Copied from Mac").
     @Published var toast: String?
 
@@ -26,7 +30,7 @@ final class VNCSession: ObservableObject, Identifiable {
     let resolver: HostResolver?
     let pasteboard: Pasteboard
     var lastSeenPasteboardChange = 0
-    private let throttle: FrameThrottle
+    let throttle: FrameThrottle
     var desktop: RemoteDesktop?
     var modifiers = ModifierLogic() { didSet { heldModifiers = modifiers.held } }
     /// Known-good password for this host (from the keychain, or typed and
@@ -54,44 +58,5 @@ final class VNCSession: ObservableObject, Identifiable {
         self.pasteboard = pasteboard
         self.makeDesktop = makeDesktop
         throttle.onFlush = { [weak self] in self?.refreshFrame() }
-    }
-
-    func handle(_ event: RemoteDesktopEvent) {
-        switch event {
-        case .state(let next):
-            state = next
-            if next == .connected {
-                notePasteboardBaseline()
-                didConnect()
-            }
-        case .credentialNeeded(let request):
-            if request.needsUsername { modifiers.keymap = .appleRemoteDesktop }
-            if let password = savedPassword, !triedSavedPassword {
-                triedSavedPassword = true
-                desktop?.supply(RemoteCredential(username: host.username, password: password))
-            } else {
-                credentialRequest = request
-            }
-        case .framebufferChanged(let size):
-            screenSize = size
-            throttle.markDirty()
-        case .framebufferUpdated:
-            throttle.markDirty()
-        }
-    }
-
-    private func didConnect() {
-        if let password = submittedPassword {
-            savedPassword = password
-            submittedPassword = nil
-        }
-        if let password = pendingRemember {
-            pendingRemember = nil
-            onRememberPassword?(password)
-        }
-    }
-
-    private func refreshFrame() {
-        frame = desktop?.snapshot()
     }
 }

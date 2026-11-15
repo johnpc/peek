@@ -13,12 +13,11 @@ item ships as its own slice (spec → implement → gate → TestFlight).
 2. ~~**Three-finger swipes → macOS gestures.**~~ Shipped: left/right switch
    Spaces (⌃→/⌃←), up opens Mission Control (⌃↑), down shows App Exposé (⌃↓).
    (iPad trackpad swipes are reserved by iPadOS, so this is touch-only.)
-3. **Remote cursor.** Draw the Mac's pointer (RoyalVNCKit already delivers the
-   cursor image + hotspot) so trackpad users and the next item have something
-   to steer.
-4. **Touchpad mode.** Optional pointer mode where a finger drag moves the Mac's
-   cursor relatively and a tap clicks where the cursor is — precise targets on
-   a phone without zooming. Toggle in the toolbar; remembered per host.
+3. ~~**Remote cursor.**~~ Shipped: the Mac's pointer image is drawn at the
+   tracked pointer position, counter-scaled so it stays the same size when zoomed.
+4. ~~**Touchpad mode.**~~ Shipped: toolbar toggle (remembered in Settings);
+   drag moves the pointer at 1.5× finger speed, tap/double-tap click where it is,
+   long-press-and-drag holds the button.
 5. **Full keyboard bar.** Second row with F1–F12, media keys (volume, play,
    brightness), ⏏, and a few macro buttons (⌘Space Spotlight, ⌘Tab, ⌘Q, ⌘W,
    screenshot ⇧⌘4), with a "Mac actions" menu (Lock ⌃⌘Q, Log out ⇧⌘Q, Sleep

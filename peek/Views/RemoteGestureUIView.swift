@@ -10,7 +10,12 @@ final class RemoteGestureUIView: UIView {
     /// Whether a two-finger drag should scroll the remote (true) or be left to
     /// the scroll view for panning (false). Set by `RemoteScreenScrollView`.
     var canScrollWithTwoFingers: () -> Bool = { true }
+    /// Direct (tap where you click) or touchpad (drag moves the pointer).
+    var pointerMode: PointerMode = .direct
+    /// One-finger drag, only active in touchpad mode.
+    let touchpadPan = UIPanGestureRecognizer()
     let twoFingerScroll = UIPanGestureRecognizer()
+    var lastTouchpadDragPoint: CGPoint = .zero
     /// Scroll-wheel / trackpad scrolling (indirect pointer, zero touches).
     let pointerScroll = UIPanGestureRecognizer()
     private var scroll = ScrollAccumulator()
@@ -37,17 +42,20 @@ final class RemoteGestureUIView: UIView {
         [tap, doubleTap, twoFingerTap, longPress, twoFingerScroll, threeFingerScroll].forEach(addGestureRecognizer)
         installSwipes(scroll: threeFingerScroll)
         installPointerSupport()
+        installTouchpad(tap: tap, doubleTap: doubleTap, longPress: longPress)
     }
 
     required init?(coder: NSCoder) { nil }
 
     @objc func tapped(_ recognizer: UIGestureRecognizer) {
         Haptics.click()
+        guard pointerMode == .direct else { return onGesture?(.clickAtPointer(.left, count: 1)) ?? () }
         showRipple(at: recognizer.location(in: self))
         onGesture?(.tap(recognizer.location(in: self)))
     }
 
     @objc func doubleTapped(_ recognizer: UIGestureRecognizer) {
+        guard pointerMode == .direct else { return onGesture?(.clickAtPointer(.left, count: 2)) ?? () }
         onGesture?(.doubleTap(recognizer.location(in: self)))
     }
 
@@ -58,6 +66,7 @@ final class RemoteGestureUIView: UIView {
     }
 
     @objc func dragged(_ recognizer: UIGestureRecognizer) {
+        guard pointerMode == .direct else { return touchpadDragged(recognizer) }
         let point = recognizer.location(in: self)
         switch recognizer.state {
         case .began:
@@ -81,6 +90,7 @@ final class RemoteGestureUIView: UIView {
 extension RemoteGestureUIView {
     /// UIView asks this for recognizers without a delegate of their own.
     override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+        if recognizer === touchpadPan { return pointerMode == .touchpad }
         guard recognizer === twoFingerScroll || recognizer === pointerScroll else { return true }
         return canScrollWithTwoFingers()
     }

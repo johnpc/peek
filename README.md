@@ -26,6 +26,7 @@ is what it was built for.
 | Live remote screen in a native zoom view: pinch around your fingers, two-finger pan while zoomed, two (or three) fingers scroll the Mac | ✅ |
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | Three-finger flicks = macOS gestures (switch Spaces, Mission Control, App Exposé) | ✅ |
+| The Mac's own pointer is drawn; optional touchpad mode (drag moves the pointer, tap clicks there) | ✅ |
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings; plain-language connection errors | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |

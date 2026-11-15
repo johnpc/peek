@@ -114,6 +114,52 @@ struct HardwareKeyMapTests {
     }
 }
 
+struct PointerTrackerTests {
+    @Test func followsMouseEventsAndClamps() {
+        var tracker = PointerTracker()
+        tracker.reset(to: CGSize(width: 1280, height: 800))
+        #expect(tracker.position == CGPoint(x: 640, y: 400))
+        tracker.observe(.move(x: 10, y: 20))
+        #expect(tracker.pixel == (10, 20))
+        tracker.observe(.buttonDown(.left, x: 30, y: 40))
+        tracker.observe(.keyDown(1))
+        #expect(tracker.pixel == (30, 40))
+        tracker.observe(.scroll(dx: 0, dy: 1, x: 5, y: 6))
+        #expect(tracker.pixel == (5, 6))
+        tracker.move(by: CGSize(width: -100, height: 10_000), within: CGSize(width: 1280, height: 800))
+        #expect(tracker.pixel == (0, 799))
+        tracker.move(by: CGSize(width: 3, height: 3), within: .zero)
+        #expect(tracker.pixel == (0, 799), "no screen, no move")
+    }
+}
+
+struct TouchpadGestureTests {
+    let screen = CGSize(width: 1280, height: 800)
+    let transform = ScreenTransform(scale: 1, offset: .zero)
+    var pointer: PointerTracker { var t = PointerTracker(); t.reset(to: screen); return t }
+
+    @Test func movesRelativelyAtTouchpadSpeed() {
+        let inputs = GestureLogic.inputs(for: .pointerMoved(by: CGSize(width: 10, height: -4)), transform: transform, screen: screen, pointer: pointer)
+        #expect(inputs == [.move(x: 655, y: 394)])
+    }
+
+    @Test func clicksAndDragsAtThePointer() {
+        #expect(GestureLogic.inputs(for: .clickAtPointer(.left, count: 1), transform: transform, screen: screen, pointer: pointer)
+                == GestureLogic.click(.left, at: (640, 400)))
+        #expect(GestureLogic.inputs(for: .clickAtPointer(.left, count: 2), transform: transform, screen: screen, pointer: pointer).count == 6)
+        #expect(GestureLogic.inputs(for: .dragBeganAtPointer, transform: transform, screen: screen, pointer: pointer) == [.buttonDown(.left, x: 640, y: 400)])
+        #expect(GestureLogic.inputs(for: .dragEndedAtPointer, transform: transform, screen: screen, pointer: pointer) == [.buttonUp(.left, x: 640, y: 400)])
+        #expect(GestureLogic.touchpadInputs(for: .tap(.zero), screen: screen, pointer: pointer).isEmpty)
+    }
+
+    @Test func pointerModeBasics() {
+        #expect(PointerMode.direct.toggled == .touchpad)
+        #expect(PointerMode.touchpad.toggled == .direct)
+        #expect(PointerMode.touchpad.label == "Touchpad mode")
+        #expect(!PointerMode.direct.symbol.isEmpty)
+    }
+}
+
 struct FrameThrottleTests {
     @Test func coalescesUntilFlush() {
         var scheduled: [@MainActor () -> Void] = []

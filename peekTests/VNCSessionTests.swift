@@ -305,6 +305,27 @@ struct VNCSessionInputTests {
         #expect(desktop.inputs.last == .keyUp(KeySym.controlLeft))
     }
 
+    @Test func pointerFollowsSentEventsAndCursorIsPublished() {
+        let (session, _) = connected()
+        #expect(session.cursor != nil, "the mock desktop sends an arrow")
+        #expect(session.pointer.position == CGPoint(x: 640, y: 400))
+        session.perform(.tap(CGPoint(x: 100, y: 50)), transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.pointer.position == CGPoint(x: 100, y: 50))
+        session.perform(.pointerMoved(by: CGSize(width: 10, height: 10)), transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.pointer.position == CGPoint(x: 115, y: 65))
+        #expect(session.lastAction == "move at 115,65")
+        session.perform(.clickAtPointer(.left, count: 1), transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.lastAction == "click left at 115,65")
+        session.perform(.clickAtPointer(.left, count: 2), transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.lastAction == "double click at 115,65")
+        session.perform(.dragBeganAtPointer, transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.lastAction == "drag start at 115,65")
+        session.perform(.dragEndedAtPointer, transform: ScreenTransform(scale: 1, offset: .zero))
+        #expect(session.lastAction == "drag end at 115,65")
+        session.desktop?.onEvent?(.cursorChanged(nil))
+        #expect(session.cursor == nil)
+    }
+
     @Test func describeScrollWithoutLocation() {
         #expect(VNCSession.describe(.scroll(steps: CGSize(width: 1, height: 0), at: .zero), inputs: []) == "scroll 1,0")
         #expect(VNCSession.describe(.tap(.zero), inputs: [.text("x")]) == "click left")

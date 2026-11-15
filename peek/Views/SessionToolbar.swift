@@ -4,6 +4,7 @@ import SwiftUI
 /// disconnect. Collapses to a single chevron so the screen can go full-bleed.
 struct SessionToolbar: View {
     @ObservedObject var session: VNCSession
+    @ObservedObject var settings: SettingsStore
     @Binding var showKeyboard: Bool
     @Binding var isCollapsed: Bool
     let isZoomed: Bool
@@ -30,6 +31,11 @@ struct SessionToolbar: View {
                 if isZoomed {
                     Button("Fit to screen", systemImage: "arrow.down.right.and.arrow.up.left", action: onFit)
                 }
+                Button(settings.pointerMode.toggled.label, systemImage: settings.pointerMode.toggled.symbol) {
+                    settings.pointerMode = settings.pointerMode.toggled
+                }
+                .accessibilityIdentifier("pointerMode")
+                .accessibilityValue(settings.pointerMode.rawValue)
                 Button("Keyboard", systemImage: showKeyboard ? "keyboard.chevron.compact.down" : "keyboard") {
                     showKeyboard.toggle()
                 }

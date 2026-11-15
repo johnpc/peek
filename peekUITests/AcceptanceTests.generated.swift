@@ -136,6 +136,16 @@ final class SettingsFeatureTests: AcceptanceTests {
 }
 
 
+/// Touchpad mode
+final class TouchpadFeatureTests: AcceptanceTests {
+
+    func test_Dragging_moves_the_pointer_and_a_tap_clicks_where_it_landed() {
+        runScenario(feature: "touchpad.feature", scenario: "Dragging moves the pointer and a tap clicks where it landed")
+    }
+
+}
+
+
 /// Zooming the remote screen
 final class ZoomFeatureTests: AcceptanceTests {
 

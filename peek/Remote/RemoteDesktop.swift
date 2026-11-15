@@ -21,6 +21,17 @@ struct DesktopOptions: Equatable {
     var syncsClipboard: Bool = true
 }
 
+/// The Mac's pointer image, so it can be drawn where the pointer is.
+struct RemoteCursor: Equatable {
+    let image: CGImage
+    /// The pixel inside `image` that sits on the pointer position.
+    let hotspot: CGPoint
+
+    static func == (lhs: RemoteCursor, rhs: RemoteCursor) -> Bool {
+        lhs.image === rhs.image && lhs.hotspot == rhs.hotspot
+    }
+}
+
 enum RemoteDesktopEvent: Equatable {
     case state(RemoteState)
     case credentialNeeded(CredentialRequest)
@@ -28,6 +39,8 @@ enum RemoteDesktopEvent: Equatable {
     case framebufferChanged(CGSize)
     /// Some region changed; call `snapshot()` to read the new contents.
     case framebufferUpdated
+    /// The server changed the pointer image (nil = hide it).
+    case cursorChanged(RemoteCursor?)
 }
 
 /// The seam between the app and a VNC implementation. `RoyalVNCDesktop` is the

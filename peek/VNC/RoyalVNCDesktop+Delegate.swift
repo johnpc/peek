@@ -32,6 +32,7 @@ extension RoyalVNCDesktop: VNCConnectionDelegate {
     }
 
     nonisolated func connection(_ connection: VNCConnection, didUpdateCursor cursor: VNCCursor) {
-        // The remote cursor isn't drawn: on a touchscreen the finger is the pointer.
+        let remote = cursor.isEmpty ? nil : cursor.cgImage.map { RemoteCursor(image: $0, hotspot: cursor.cgHotspot) }
+        Task { @MainActor in self.receive(.cursorChanged(remote)) }
     }
 }
