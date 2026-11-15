@@ -29,7 +29,7 @@ struct SessionView: View {
                     settings.hasSeenGestureTips = true
                     session.perform(gesture, transform: transform)
                 }
-                .ignoresSafeArea(.container)
+                .ignoresSafeArea()  // the scroll view fits the screen around the keyboard itself
             }
             if !session.state.isActive || session.frame == nil {
                 SessionStatusView(session: session, onClose: onClose)
