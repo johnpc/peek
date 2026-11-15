@@ -23,7 +23,9 @@ struct RemoteScreenView: View {
                     .offset(x: transform.offset.x, y: transform.offset.y)
                 RemoteGestureView(
                     onGesture: { onGesture($0, transform) },
-                    onPinch: { scale, delta in zoomState.pinch(by: scale, centroidDelta: delta) }
+                    onPinch: { scale, delta in zoomState.pinch(by: scale, centroidDelta: delta) },
+                    onPan: { delta in zoomState.pan(by: delta) },
+                    isZoomed: { zoomState.isZoomed }
                 )
             }
         }

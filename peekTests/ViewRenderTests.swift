@@ -99,6 +99,11 @@ final class ViewRenderTests: XCTestCase {
         XCTAssertEqual(typed, ["a"])
         XCTAssertEqual(backspaces, 1)
         XCTAssertEqual(returns, 1)
+        var actions: [HardwareKeyAction] = []
+        view.onHardwareKey = { actions.append($0) }
+        XCTAssertEqual(view.handle(keyCode: .keyboardEscape, modifiers: [], characters: ""), .key(.escape))
+        view.pressesBegan([], with: nil)
+        XCTAssertTrue(actions.isEmpty)
         XCTAssertTrue(view.canBecomeFirstResponder)
         XCTAssertTrue(view.hasText)
         let representable = KeyInputView(isActive: true, onText: { _ in }, onBackspace: {}, onReturn: {})
@@ -120,7 +125,15 @@ final class ViewRenderTests: XCTestCase {
         view.pinched(UIPinchGestureRecognizer())
         XCTAssertEqual(gestures.count, 4, "tap, double tap, secondary tap, scroll; a .possible long press sends nothing")
         XCTAssertEqual(pinches, 1)
+        var pans = 0
+        view.onPan = { _ in pans += 1 }
+        view.isZoomed = { false }
+        view.twoFingerPanned(UIPanGestureRecognizer())
+        XCTAssertEqual(gestures.count, 5, "two fingers scroll when not zoomed")
+        view.isZoomed = { true }
+        view.twoFingerPanned(UIPanGestureRecognizer())
+        XCTAssertEqual(pans, 1, "two fingers pan the view when zoomed")
         XCTAssertNil(RemoteGestureUIView(coder: NSCoder()))
-        render(RemoteGestureView(onGesture: { _ in }, onPinch: { _, _ in }))
+        render(RemoteGestureView(onGesture: { _ in }, onPinch: { _, _ in }, onPan: { _ in }, isZoomed: { false }))
     }
 }

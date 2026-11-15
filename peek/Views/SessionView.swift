@@ -45,7 +45,13 @@ struct SessionView: View {
                 KeyInputView(isActive: showKeyboard,
                              onText: { session.type($0) },
                              onBackspace: { session.press(.delete) },
-                             onReturn: { session.press(.return) })
+                             onReturn: { session.press(.return) },
+                             onHardwareKey: { action in
+                                 switch action {
+                                 case .key(let key): session.press(key)
+                                 case .chord(let held, let text): session.chord(held, text: text)
+                                 }
+                             })
                     .frame(width: 1, height: 1)
                     .opacity(0.01)
             }

@@ -10,8 +10,9 @@ enum BonjourEndpoint {
         return DiscoveredHost(serviceName: serviceName, hostname: string(for: host), port: port.rawValue)
     }
 
-    /// Hostname text a VNC library can dial: names as-is, IPv4 dotted, IPv6
-    /// without the `%interface` scope suffix.
+    /// Hostname text a VNC library can dial: names as-is, IPv4 dotted, IPv6 as
+    /// printed — including a `%en0`-style scope, which link-local addresses
+    /// need to be routable (verified on a real Mac; stripping it would break them).
     static func string(for host: NWEndpoint.Host) -> String {
         switch host {
         case .name(let name, _):
@@ -19,7 +20,7 @@ enum BonjourEndpoint {
         case .ipv4(let address):
             return "\(address)"
         case .ipv6(let address):
-            return "\(address)".split(separator: "%").first.map(String.init) ?? "\(address)"
+            return "\(address)"
         @unknown default:
             return "\(host)"
         }

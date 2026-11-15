@@ -23,6 +23,12 @@ struct ZoomState: Equatable {
         }
     }
 
+    /// Two-finger drag while zoomed: move the magnified view.
+    mutating func pan(by delta: CGSize) {
+        guard isZoomed else { return }
+        pan = CGSize(width: pan.width + delta.width, height: pan.height + delta.height)
+    }
+
     mutating func reset() {
         zoom = Self.minimum
         pan = .zero

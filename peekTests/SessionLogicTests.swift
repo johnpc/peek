@@ -1,6 +1,7 @@
 import Foundation
 import CoreGraphics
 import Testing
+import UIKit
 @testable import peek
 
 struct ModifierLogicTests {
@@ -67,8 +68,13 @@ struct ZoomStateTests {
         state.pinch(by: 2, centroidDelta: CGSize(width: 10, height: -5))
         #expect(state.zoom == 2)
         #expect(state.pan == CGSize(width: 10, height: -5))
+        state.pan(by: CGSize(width: 5, height: 5))
+        #expect(state.pan == CGSize(width: 15, height: 0))
         state.pinch(by: 100, centroidDelta: .zero)
         #expect(state.zoom == ZoomState.maximum)
+        var flat = ZoomState()
+        flat.pan(by: CGSize(width: 9, height: 9))
+        #expect(flat.pan == .zero, "panning only applies when zoomed")
         #expect(state.isZoomed)
         state.reset()
         #expect(state == ZoomState())
@@ -106,6 +112,21 @@ struct GestureLogicTests {
         #expect(inputs(.dragEnded(CGPoint(x: 4, y: 4))) == [.buttonUp(.left, x: 4, y: 4)])
         #expect(inputs(.scroll(steps: .zero, at: .zero)).isEmpty)
         #expect(inputs(.scroll(steps: CGSize(width: 1, height: -2), at: CGPoint(x: 9, y: 9))) == [.scroll(dx: 1, dy: -2, x: 9, y: 9)])
+    }
+}
+
+struct HardwareKeyMapTests {
+    @Test func specialKeysAndChords() {
+        #expect(HardwareKeyMap.action(keyCode: .keyboardEscape, modifiers: [], characters: "") == .key(.escape))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardLeftArrow, modifiers: [], characters: "") == .key(.leftArrow))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardReturnOrEnter, modifiers: [], characters: "\r") == .key(.return))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardC, modifiers: [.command], characters: "c") == .chord([.command], "c"))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardZ, modifiers: [.command, .shift], characters: "z") == .chord([.command, .shift], "z"))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardTab, modifiers: [.alternate], characters: "\t") == .chord([.option], "\t"))
+        #expect(HardwareKeyMap.action(keyCode: .keyboardA, modifiers: [], characters: "a") == nil, "plain typing goes through insertText")
+        #expect(HardwareKeyMap.action(keyCode: .keyboardA, modifiers: [.shift], characters: "a") == nil, "shift alone is just typing")
+        #expect(HardwareKeyMap.action(keyCode: .keyboardA, modifiers: [.control], characters: "") == nil)
+        #expect(HardwareKeyMap.modifiers(from: [.command, .alternate, .control, .shift]) == [.command, .option, .control, .shift])
     }
 }
 

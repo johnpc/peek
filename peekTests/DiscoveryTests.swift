@@ -59,6 +59,9 @@ struct BonjourEndpointTests {
     @Test func hostStrings() {
         #expect(BonjourEndpoint.string(for: .name("mini.local", nil)) == "mini.local")
         #expect(BonjourEndpoint.string(for: .ipv6(.loopback)) == "::1")
+        if let scoped = IPv6Address("fe80::1%en0") {
+            #expect(BonjourEndpoint.string(for: .ipv6(scoped)).hasPrefix("fe80::1"), "scope is kept, not stripped")
+        }
         #expect(BonjourEndpoint.string(for: .ipv4(.loopback)) == "127.0.0.1")
     }
 

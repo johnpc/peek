@@ -191,6 +191,20 @@ struct VNCSessionInputTests {
         #expect(session.lastAction == "text hi")
     }
 
+    @Test func hardwareChordsHoldModifiersAroundText() {
+        let (session, desktop) = connected()
+        session.chord([.command, .shift], text: "z")
+        #expect(session.lastAction == "⌘⇧z")
+        #expect(desktop.inputs.suffix(5) == [
+            .keyDown(KeySym.superLeft), .keyDown(KeySym.shiftLeft), .text("z"),
+            .keyUp(KeySym.shiftLeft), .keyUp(KeySym.superLeft),
+        ])
+        session.toggle(.control)
+        session.chord([.command], text: "c")
+        #expect(session.heldModifiers.isEmpty, "sticky modifiers release after a chord")
+        #expect(desktop.inputs.last == .keyUp(KeySym.controlLeft))
+    }
+
     @Test func describeScrollWithoutLocation() {
         #expect(VNCSession.describe(.scroll(steps: CGSize(width: 1, height: 0), at: .zero), inputs: []) == "scroll 1,0")
         #expect(VNCSession.describe(.tap(.zero), inputs: [.text("x")]) == "click left")

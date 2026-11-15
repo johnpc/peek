@@ -23,14 +23,15 @@ is what it was built for.
 | Save computers by name/address/port (or `host:port`); edit, delete | ✅ |
 | Apple Remote Desktop sign-in (Mac account + password) and classic VNC passwords | ✅ |
 | Remember passwords in the iOS keychain | ✅ |
-| Live remote screen, pinch to zoom, pinch-and-move to pan | ✅ |
+| Live remote screen; pinch to zoom, two-finger pan while zoomed (three fingers scroll) | ✅ |
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |
 | Auto-reconnect when you come back to the app after a drop | ✅ |
 | Clipboard sync | ⬜ |
-| Hardware keyboard & trackpad on iPad | ⬜ |
+| Hardware keyboard on iPad (arrows, Esc, Tab, ⌘/⌃/⌥ shortcuts) | ✅ |
+| Trackpad / mouse on iPad | ⬜ |
 | Wake-on-LAN | ⬜ |
 
 ## Screenshots

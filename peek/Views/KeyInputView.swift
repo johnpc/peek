@@ -8,12 +8,14 @@ struct KeyInputView: UIViewRepresentable {
     let onText: (String) -> Void
     let onBackspace: () -> Void
     let onReturn: () -> Void
+    var onHardwareKey: (HardwareKeyAction) -> Void = { _ in }
 
     func makeUIView(context: Context) -> KeyInputUIView {
         let view = KeyInputUIView()
         view.onText = onText
         view.onBackspace = onBackspace
         view.onReturn = onReturn
+        view.onHardwareKey = onHardwareKey
         return view
     }
 
@@ -21,6 +23,7 @@ struct KeyInputView: UIViewRepresentable {
         uiView.onText = onText
         uiView.onBackspace = onBackspace
         uiView.onReturn = onReturn
+        uiView.onHardwareKey = onHardwareKey
         if isActive, !uiView.isFirstResponder {
             DispatchQueue.main.async { uiView.becomeFirstResponder() }
         } else if !isActive, uiView.isFirstResponder {
@@ -33,6 +36,7 @@ final class KeyInputUIView: UIView, UIKeyInput {
     var onText: ((String) -> Void)?
     var onBackspace: (() -> Void)?
     var onReturn: (() -> Void)?
+    var onHardwareKey: ((HardwareKeyAction) -> Void)?
 
     override var canBecomeFirstResponder: Bool { true }
     var hasText: Bool { true }
@@ -52,5 +56,24 @@ final class KeyInputUIView: UIView, UIKeyInput {
 
     func deleteBackward() {
         onBackspace?()
+    }
+
+    /// Physical keyboards: claim arrows/Esc/Tab and ⌘⌃⌥ chords here; let
+    /// plain characters fall through to `insertText`.
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        var unhandled: Set<UIPress> = []
+        for press in presses {
+            if let key = press.key, let action = handle(keyCode: key.keyCode, modifiers: key.modifierFlags,
+                                                        characters: key.charactersIgnoringModifiers) {
+                onHardwareKey?(action)
+            } else {
+                unhandled.insert(press)
+            }
+        }
+        if !unhandled.isEmpty { super.pressesBegan(unhandled, with: event) }
+    }
+
+    func handle(keyCode: UIKeyboardHIDUsage, modifiers: UIKeyModifierFlags, characters: String) -> HardwareKeyAction? {
+        HardwareKeyMap.action(keyCode: keyCode, modifiers: modifiers, characters: characters)
     }
 }

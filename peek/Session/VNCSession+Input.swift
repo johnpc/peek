@@ -22,6 +22,17 @@ extension VNCSession {
         send(inputs, action: "text \(text)")
     }
 
+    /// A hardware-keyboard shortcut: hold `held`, send `text`, release — on top
+    /// of any sticky modifiers already held from the keyboard bar.
+    func chord(_ held: Set<Modifier>, text: String) {
+        let keymap = modifiers.keymap
+        let ordered = Modifier.allCases.filter { held.contains($0) }
+        let downs = ordered.map { RemoteInput.keyDown(keymap.keysym(for: $0)) }
+        let ups = ordered.reversed().map { RemoteInput.keyUp(keymap.keysym(for: $0)) }
+        let inputs = modifiers.wrap(downs + [.text(text)] + ups)
+        send(inputs, action: ordered.map(\.symbol).joined() + text)
+    }
+
     func toggle(_ modifier: Modifier) {
         let inputs = modifiers.toggle(modifier)
         let verb = modifiers.held.contains(modifier) ? "hold" : "release"
