@@ -50,9 +50,6 @@ struct SessionView: View {
                 if isShowingScreen, !settings.hasSeenGestureTips, !showKeyboard {
                     GestureTipsView { settings.hasSeenGestureTips = true }
                 }
-                if showKeyboard, session.state == .connected {
-                    KeyboardBar(session: session)
-                }
             }
             if showKeyboard {
                 KeyInputView(isActive: showKeyboard,
@@ -64,11 +61,15 @@ struct SessionView: View {
                                  case .key(let key): session.press(key)
                                  case .chord(let held, let text): session.chord(held, text: text)
                                  }
-                             })
+                             },
+                             accessory: AnyView(KeyboardBar(session: session)))
                     .frame(width: 1, height: 1)
                     .opacity(0.01)
             }
         }
+        // The key bar rides on the keyboard itself and the screen re-fits above
+        // it (RemoteScreenScrollView), so the layout must not move for the keyboard.
+        .ignoresSafeArea(.keyboard)
         .sheet(isPresented: credentialPresented) {
             CredentialSheet(session: session)
                 .interactiveDismissDisabled()

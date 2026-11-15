@@ -9,9 +9,12 @@ struct KeyInputView: UIViewRepresentable {
     let onBackspace: () -> Void
     let onReturn: () -> Void
     var onHardwareKey: (HardwareKeyAction) -> Void = { _ in }
+    /// Rides on top of the system keyboard (the key bar).
+    var accessory: AnyView? = nil
 
     func makeUIView(context: Context) -> KeyInputUIView {
         let view = KeyInputUIView()
+        if let accessory { view.accessoryHost = KeyboardAccessoryView(height: KeyboardBar.height, content: accessory) }
         view.onText = onText
         view.onBackspace = onBackspace
         view.onReturn = onReturn
@@ -24,6 +27,7 @@ struct KeyInputView: UIViewRepresentable {
         uiView.onBackspace = onBackspace
         uiView.onReturn = onReturn
         uiView.onHardwareKey = onHardwareKey
+        if let accessory { uiView.accessoryHost?.update(accessory) }
         if isActive, !uiView.isFirstResponder {
             DispatchQueue.main.async { uiView.becomeFirstResponder() }
         } else if !isActive, uiView.isFirstResponder {
@@ -37,8 +41,10 @@ final class KeyInputUIView: UIView, UIKeyInput {
     var onBackspace: (() -> Void)?
     var onReturn: (() -> Void)?
     var onHardwareKey: ((HardwareKeyAction) -> Void)?
+    var accessoryHost: KeyboardAccessoryView<AnyView>?
 
     override var canBecomeFirstResponder: Bool { true }
+    override var inputAccessoryView: UIView? { accessoryHost }
     var hasText: Bool { true }
     var autocorrectionType: UITextAutocorrectionType = .no
     var autocapitalizationType: UITextAutocapitalizationType = .none

@@ -3,6 +3,8 @@ import SwiftUI
 /// Keys the phone keyboard lacks. Page one: sticky ⌘⌥⌃⇧, Paste, esc/tab/
 /// return/delete/arrows. Page two: F1–F12. A "Mac" menu holds common actions.
 struct KeyboardBar: View {
+    /// Fixed height for the keyboard accessory slot it lives in.
+    static let height: CGFloat = 54
     @ObservedObject var session: VNCSession
     @State private var showFunctionKeys = false
 
