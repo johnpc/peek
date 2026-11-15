@@ -13,7 +13,5 @@
     <array>
         <string>_rfb._tcp</string>
     </array>
-    <key>UIRequiresFullScreen</key>
-    <false/>
 </dict>
 </plist>

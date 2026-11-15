@@ -160,7 +160,14 @@ jobs:
               -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1
           }
 
-          OUTPUT=$(archive_and_upload) && echo "$OUTPUT" && exit 0
+          # Capture for the conflict check below, but always show the full
+          # output in the job log — a swallowed error here cost us a run.
+          set +e
+          OUTPUT=$(archive_and_upload 2>&1)
+          STATUS=$?
+          set -e
+          echo "$OUTPUT"
+          [ "$STATUS" -eq 0 ] && exit 0
 
           if echo "$OUTPUT" | grep -q "Error Downloading App Information"; then
             # The archive built and signed; App Store Connect just has no app
@@ -188,7 +195,6 @@ jobs:
             rm -rf ~/Desktop/peek.xcarchive ~/Desktop/export
             archive_and_upload
           else
-            echo "$OUTPUT"
             exit 1
           fi
 
