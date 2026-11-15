@@ -123,6 +123,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
         runScenario(feature: "session_controls.feature", scenario: "Modifiers stay held until the next key")
     }
 
+    func test_The_key_bar_rides_on_top_of_the_keyboard() {
+        runScenario(feature: "session_controls.feature", scenario: "The key bar rides on top of the keyboard")
+    }
+
     func test_The_controls_can_be_tucked_away_for_a_full_bleed_screen() {
         runScenario(feature: "session_controls.feature", scenario: "The controls can be tucked away for a full-bleed screen")
     }

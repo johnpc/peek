@@ -11,6 +11,9 @@ final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
     let cursorLayer = CALayer()
     var onZoomChanged: ((Bool) -> Void)?
     private(set) var screenSize: CGSize = .zero
+    /// Points at the bottom hidden by the keyboard; the screen fits above it.
+    var keyboardOverlap: CGFloat = 0 { didSet { setNeedsLayout() } }
+    var visibleHeight: CGFloat { max(1, bounds.height - keyboardOverlap) }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -27,13 +30,14 @@ final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
         panGestureRecognizer.require(toFail: content.pointerScroll)
         content.canScrollWithTwoFingers = { [weak self] in self.map { !$0.isZoomed } ?? true }
         addSubview(content)
+        observeKeyboard()
     }
 
     required init?(coder: NSCoder) { nil }
 
     var fitScale: CGFloat {
         guard screenSize.width > 0, screenSize.height > 0, bounds.width > 0, bounds.height > 0 else { return 1 }
-        return min(bounds.width / screenSize.width, bounds.height / screenSize.height)
+        return min(bounds.width / screenSize.width, visibleHeight / screenSize.height)
     }
 
     var isZoomed: Bool { zoomScale > minimumZoomScale * 1.01 }
@@ -68,11 +72,11 @@ final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
         center()
     }
 
-    /// Keep the image centered while it is smaller than the viewport.
+    /// Keep the image centered in the part of the viewport the keyboard leaves.
     private func center() {
         let dx = max(0, (bounds.width - contentSize.width) / 2)
-        let dy = max(0, (bounds.height - contentSize.height) / 2)
-        contentInset = UIEdgeInsets(top: dy, left: dx, bottom: dy, right: dx)
+        let dy = max(0, (visibleHeight - contentSize.height) / 2)
+        contentInset = UIEdgeInsets(top: dy, left: dx, bottom: dy + keyboardOverlap, right: dx)
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { content }

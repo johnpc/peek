@@ -49,10 +49,15 @@ item ships as its own slice (spec → implement → gate → TestFlight).
 Jump's Fluid / Screens' accelerated transport, RDP, SSH tunnelling, remote
 audio, file transfer, multi-monitor selection beyond what the VNC server sends.
 
-## 🔴 Follow-up: keyboard is broken on device (reported 2026-11-15)
+## ✅ Fixed: keyboard layout was broken on device (reported 2026-11-15)
 
-John: "the keyboard in peek is totally borked" (on-device, after builds 5–11). Not yet
-reproduced. Plan: reproduce on the simulator against the mini, fix, and **verify with
-screenshots** of each keyboard state (system keyboard up, key bar visible, Mac menu page,
-typing into Safari on the mini) attached to the PR. Suspects: KeyboardBar overlaying the
-keyboard, focus loss on KeyInputView, key-bar paging, modifier keysyms.
+John: "the keyboard in peek is totally borked". Reproduced in the simulator against a logging
+VNC server: every keystroke reached the server correctly, but **the key bar floated in the
+middle of the screen** with a ~200pt gap above the system keyboard, and the remote screen
+re-laid out underneath it (SwiftUI keyboard avoidance on the session ZStack).
+
+Fix: the key bar is now the keyboard's own **input accessory view** (`KeyboardAccessoryView`),
+so UIKit glues it to the top of the keys; the session layout ignores the keyboard entirely;
+and `RemoteScreenScrollView` re-fits the remote screen into the area the keyboard leaves
+(`+Keyboard.swift`). Pinned by the scenario "The key bar rides on top of the keyboard" and
+verified with screenshots in the PR (simulator vs. the fake server, and the real Mac mini).

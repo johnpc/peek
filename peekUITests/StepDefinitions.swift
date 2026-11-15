@@ -169,6 +169,16 @@ enum StepDefinitions {
             }
             tap(key)
         }
+        r.define("the key bar should sit on the keyboard") { w in
+            let bar = w.app.scrollViews["keyboardBar"]
+            let keyboard = w.app.keyboards.firstMatch
+            XCTAssertTrue(bar.waitForExistence(timeout: medium), "the key bar should be on screen")
+            XCTAssertTrue(keyboard.waitForExistence(timeout: medium), "the system keyboard should be up")
+            // The keyboard element's frame starts below its own ~16pt top inset.
+            XCTAssertEqual(bar.frame.maxY, keyboard.frame.minY, accuracy: 20,
+                           "bar \(bar.frame) should end where the keyboard \(keyboard.frame) begins")
+            XCTAssertLessThanOrEqual(bar.frame.maxY, keyboard.frame.minY + 1, "the bar is above the keys, not under them")
+        }
         r.define("the \"(.+)\" modifier should be (held|released)") { w in
             let key = w.app.buttons["key-\(w.capture(0))"]
             let expected = w.capture(1)

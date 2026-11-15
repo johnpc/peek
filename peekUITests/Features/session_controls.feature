@@ -47,6 +47,14 @@ Feature: Controlling the remote screen
     And the last input should be "key tab"
 
   @saved-password
+  Scenario: The key bar rides on top of the keyboard
+    Given I am connected to "Studio Mac"
+    And I dismiss the controls tip
+    When I tap "Keyboard"
+    Then the key bar should sit on the keyboard
+    And I should see the remote screen
+
+  @saved-password
   Scenario: The controls can be tucked away for a full-bleed screen
     Given I am connected to "Studio Mac"
     And I dismiss the controls tip
