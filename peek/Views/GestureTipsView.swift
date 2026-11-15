@@ -11,6 +11,8 @@ struct GestureTipsView: View {
         ("hand.draw", "Press and hold, then drag to move things"),
         ("arrow.up.and.down", "Drag with two fingers to scroll"),
         ("arrow.up.left.and.down.right.magnifyingglass", "Pinch to zoom, then drag with two fingers to pan"),
+        ("hand.draw.fill", "Flick with three fingers: sideways switches Spaces, up is Mission Control"),
+        ("rotate.right", "Turn your phone sideways for a bigger picture"),
     ]
 
     var body: some View {

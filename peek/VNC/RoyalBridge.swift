@@ -8,10 +8,10 @@ nonisolated enum RoyalBridge {
                                hostname: host.hostname,
                                port: host.port,
                                isShared: options.isShared,
-                               isScalingEnabled: options.isScalingEnabled,
+                               isScalingEnabled: false, // only used by RoyalVNCKit's macOS view
                                useDisplayLink: false,
                                inputMode: .forwardKeyboardShortcutsEvenIfInUseLocally,
-                               isClipboardRedirectionEnabled: true,
+                               isClipboardRedirectionEnabled: options.syncsClipboard,
                                colorDepth: colorDepth(options.colorDepth),
                                frameEncodings: .default)
     }
@@ -35,9 +35,11 @@ nonisolated enum RoyalBridge {
 
     static func failure(_ error: Error?) -> RemoteFailure? {
         guard let error else { return nil }
-        guard let vncError = error as? VNCError else { return .connection(error.localizedDescription) }
-        let text = vncError.errorDescription ?? "The connection failed."
-        return vncError.isAuthenticationError ? .authentication(text) : .connection(text)
+        guard let vncError = error as? VNCError else {
+            return .connection(FriendlyError.message(for: error) ?? error.localizedDescription)
+        }
+        if vncError.isAuthenticationError { return .authentication("The username or password wasn't accepted.") }
+        return .connection(FriendlyError.message(for: vncError) ?? vncError.errorDescription ?? "The connection failed.")
     }
 
     static func credential(_ credential: RemoteCredential, for request: CredentialRequest) -> VNCCredential {

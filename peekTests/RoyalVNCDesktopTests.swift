@@ -7,7 +7,7 @@ import Testing
 struct RoyalVNCDesktopTests {
     @Test func refusedConnectionReportsAConnectionFailure() async throws {
         let host = SavedHost(name: "nothing", hostname: "127.0.0.1", port: 1)
-        let desktop = RoyalVNCDesktop(host: host, options: DesktopOptions(colorDepth: 16, isShared: false, isScalingEnabled: false))
+        let desktop = RoyalVNCDesktop(host: host, options: DesktopOptions(colorDepth: 16, isShared: false))
         var events: [RemoteDesktopEvent] = []
         desktop.onEvent = { events.append($0) }
         desktop.connect()
@@ -21,6 +21,7 @@ struct RoyalVNCDesktopTests {
         }
         #expect(failure != nil)
         #expect(failure?.isAuthentication == false)
+        #expect(failure?.message == FriendlyError.refused, "a refused port gets the plain-language explanation, got \(String(describing: failure))")
         #expect(desktop.snapshot() == nil)
         desktop.supply(nil)
         desktop.send(.move(x: 1, y: 1))

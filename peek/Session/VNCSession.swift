@@ -14,6 +14,8 @@ final class VNCSession: ObservableObject, Identifiable {
     @Published var credentialRequest: CredentialRequest?
     @Published var lastAction: String?
     @Published private(set) var heldModifiers: Set<Modifier> = []
+    /// Short-lived notice for the session screen ("Copied from Mac").
+    @Published var toast: String?
 
     /// Fired when the user asks to remember a password that just worked.
     var onRememberPassword: ((String) -> Void)?
@@ -22,6 +24,8 @@ final class VNCSession: ObservableObject, Identifiable {
 
     let makeDesktop: (SavedHost) -> RemoteDesktop
     let resolver: HostResolver?
+    let pasteboard: Pasteboard
+    var lastSeenPasteboardChange = 0
     private let throttle: FrameThrottle
     var desktop: RemoteDesktop?
     var modifiers = ModifierLogic() { didSet { heldModifiers = modifiers.held } }
@@ -41,11 +45,13 @@ final class VNCSession: ObservableObject, Identifiable {
          savedPassword: String? = nil,
          throttle: FrameThrottle = FrameThrottle(),
          resolver: HostResolver? = nil,
+         pasteboard: Pasteboard = SystemPasteboard(),
          makeDesktop: @escaping (SavedHost) -> RemoteDesktop) {
         self.host = host
         self.savedPassword = savedPassword
         self.throttle = throttle
         self.resolver = resolver
+        self.pasteboard = pasteboard
         self.makeDesktop = makeDesktop
         throttle.onFlush = { [weak self] in self?.refreshFrame() }
     }
@@ -54,7 +60,10 @@ final class VNCSession: ObservableObject, Identifiable {
         switch event {
         case .state(let next):
             state = next
-            if next == .connected { didConnect() }
+            if next == .connected {
+                notePasteboardBaseline()
+                didConnect()
+            }
         case .credentialNeeded(let request):
             if request.needsUsername { modifiers.keymap = .appleRemoteDesktop }
             if let password = savedPassword, !triedSavedPassword {

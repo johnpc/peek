@@ -4,6 +4,20 @@
 import XCTest
 
 
+/// Clipboard
+final class ClipboardFeatureTests: AcceptanceTests {
+
+    func test_The_Paste_key_sends_the_phone_s_clipboard_to_the_Mac() {
+        runScenario(feature: "clipboard.feature", scenario: "The Paste key sends the phone's clipboard to the Mac")
+    }
+
+    func test_Pasting_with_an_empty_clipboard_says_so() {
+        runScenario(feature: "clipboard.feature", scenario: "Pasting with an empty clipboard says so")
+    }
+
+}
+
+
 /// Connecting
 final class ConnectFeatureTests: AcceptanceTests {
 

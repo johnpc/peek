@@ -53,6 +53,8 @@ extension VNCSession {
         case .dragMoved: return "drag" + location(inputs)
         case .dragEnded: return "drag end" + location(inputs)
         case .scroll(let steps, _): return "scroll \(Int(steps.width)),\(Int(steps.height))"
+        case .hover: return "move" + location(inputs)
+        case .swipe(let direction): return "swipe \(direction.name)"
         }
     }
 

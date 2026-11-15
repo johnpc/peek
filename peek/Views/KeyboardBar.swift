@@ -16,6 +16,11 @@ struct KeyboardBar: View {
                         .accessibilityValue(held ? "held" : "released")
                 }
                 Divider().frame(height: 24)
+                Button("Paste", systemImage: "doc.on.clipboard") { session.pasteFromDevice() }
+                    .buttonStyle(KeyButtonStyle(highlighted: false))
+                    .labelStyle(.titleAndIcon)
+                    .accessibilityIdentifier("key-Paste")
+                Divider().frame(height: 24)
                 ForEach(RemoteKey.allCases, id: \.self) { key in
                     Button(key.label) { session.press(key) }
                         .buttonStyle(KeyButtonStyle(highlighted: false))

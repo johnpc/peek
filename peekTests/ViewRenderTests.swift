@@ -71,6 +71,10 @@ final class ViewRenderTests: XCTestCase {
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
         render(ReconnectingPill())
+        var toastDismissed = 0
+        render(ToastView(text: "Copied from Mac") { toastDismissed += 1 })
+        XCTAssertEqual(toastDismissed, 0)
+        XCTAssertEqual(MockPasteboard(string: "a").changeCount, 1)
         session.retry()
         session.submitCredential(username: "john", password: "nope", remember: false)
         render(SessionStatusView(session: session, onClose: {}))
@@ -187,8 +191,21 @@ final class ViewRenderTests: XCTestCase {
         view.scrolled(UIPanGestureRecognizer())
         XCTAssertEqual(gestures.count, 4, "tap, double tap, secondary tap, scroll; a .possible long press sends nothing")
         XCTAssertTrue(view.gestureRecognizerShouldBegin(UITapGestureRecognizer()), "other recognizers are never gated")
+        view.hovered(UIHoverGestureRecognizer())
+        XCTAssertEqual(gestures.count, 4, "a .possible hover sends nothing")
+        let swipe = UISwipeGestureRecognizer(); swipe.direction = .up
+        view.swiped(swipe)
+        XCTAssertEqual(gestures.last, .swipe(.up))
+        XCTAssertNil(SwipeDirection(UISwipeGestureRecognizer.Direction(rawValue: 0)))
+        XCTAssertEqual(SwipeDirection(.left), .left)
+        XCTAssertEqual(SwipeDirection(.right), .right)
+        XCTAssertEqual(SwipeDirection(.down), .down)
+        let ringsBefore = view.layer.sublayers?.count ?? 0
+        view.showRipple(at: CGPoint(x: 10, y: 10))
+        XCTAssertEqual(view.layer.sublayers?.count, ringsBefore + 1, "ripple layer added")
         view.canScrollWithTwoFingers = { false }
         XCTAssertFalse(view.gestureRecognizerShouldBegin(view.twoFingerScroll))
+        XCTAssertFalse(view.gestureRecognizerShouldBegin(view.pointerScroll))
         view.canScrollWithTwoFingers = { true }
         XCTAssertTrue(view.gestureRecognizerShouldBegin(view.twoFingerScroll))
         XCTAssertNil(RemoteGestureUIView(coder: NSCoder()))

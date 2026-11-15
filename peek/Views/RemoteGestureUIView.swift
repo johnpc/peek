@@ -11,6 +11,8 @@ final class RemoteGestureUIView: UIView {
     /// the scroll view for panning (false). Set by `RemoteScreenScrollView`.
     var canScrollWithTwoFingers: () -> Bool = { true }
     let twoFingerScroll = UIPanGestureRecognizer()
+    /// Scroll-wheel / trackpad scrolling (indirect pointer, zero touches).
+    let pointerScroll = UIPanGestureRecognizer()
     private var scroll = ScrollAccumulator()
 
     override init(frame: CGRect) {
@@ -33,12 +35,15 @@ final class RemoteGestureUIView: UIView {
         threeFingerScroll.minimumNumberOfTouches = 3
         threeFingerScroll.maximumNumberOfTouches = 3
         [tap, doubleTap, twoFingerTap, longPress, twoFingerScroll, threeFingerScroll].forEach(addGestureRecognizer)
+        installSwipes(scroll: threeFingerScroll)
+        installPointerSupport()
     }
 
     required init?(coder: NSCoder) { nil }
 
     @objc func tapped(_ recognizer: UIGestureRecognizer) {
         Haptics.click()
+        showRipple(at: recognizer.location(in: self))
         onGesture?(.tap(recognizer.location(in: self)))
     }
 
@@ -48,6 +53,7 @@ final class RemoteGestureUIView: UIView {
 
     @objc func secondaryTapped(_ recognizer: UIGestureRecognizer) {
         Haptics.click()
+        showRipple(at: recognizer.location(in: self))
         onGesture?(.secondaryTap(recognizer.location(in: self)))
     }
 
@@ -75,6 +81,7 @@ final class RemoteGestureUIView: UIView {
 extension RemoteGestureUIView {
     /// UIView asks this for recognizers without a delegate of their own.
     override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
-        recognizer !== twoFingerScroll || canScrollWithTwoFingers()
+        guard recognizer === twoFingerScroll || recognizer === pointerScroll else { return true }
+        return canScrollWithTwoFingers()
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 /// Full-screen remote desktop: the screen, a thin toolbar, the optional
 /// keyboard bar, and the sign-in / status / first-run tip overlays.
@@ -33,6 +34,9 @@ struct SessionView: View {
             } else if session.state == .connecting {
                 ReconnectingPill()
             }
+            if let toast = session.toast {
+                ToastView(text: toast) { session.toast = nil }
+            }
             VStack(spacing: 0) {
                 SessionToolbar(session: session, showKeyboard: $showKeyboard, isCollapsed: $isToolbarCollapsed,
                                isZoomed: isZoomed, onFit: { fitRequest += 1 }, onClose: onClose)
@@ -65,6 +69,9 @@ struct SessionView: View {
         }
         .onAppear { session.connect() }
         .onChange(of: scenePhase) { _, phase in lifecycle.update(phase, session: session) }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            session.pasteboardDidChange()
+        }
         .task(id: isShowingScreen && settings.hasSeenGestureTips) { await autoCollapseToolbar() }
         .onChange(of: isToolbarCollapsed) { _, _ in autoCollapseArmed = false }
         .statusBarHidden(true)

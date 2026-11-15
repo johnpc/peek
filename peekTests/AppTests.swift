@@ -31,6 +31,12 @@ struct MockModeTests {
         #expect(env.discovery.nearby.isEmpty)
     }
 
+    @Test func pasteboardFlagPreloadsTheMockClipboard() {
+        let env = MockMode.environment(["--uitest-mock", "--uitest-pasteboard"])
+        #expect(env.pasteboard.string == MockMode.fixturePasteboardText)
+        #expect(MockMode.environment(["--uitest-mock"]).pasteboard.string == nil)
+    }
+
     @Test func noHostsFlagStartsEmpty() {
         let env = MockMode.environment(["--uitest-mock", "--uitest-no-hosts"])
         #expect(env.hosts.hosts.isEmpty)

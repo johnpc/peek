@@ -8,16 +8,19 @@ final class AppEnvironment {
     let settings: SettingsStore
     let makeDesktop: RemoteDesktopFactory
     let resolver: HostResolver
+    let pasteboard: Pasteboard
 
     init(hosts: HostStore,
          discovery: DiscoveryStore,
          settings: SettingsStore,
          resolver: HostResolver,
+         pasteboard: Pasteboard = SystemPasteboard(),
          makeDesktop: @escaping RemoteDesktopFactory) {
         self.hosts = hosts
         self.discovery = discovery
         self.settings = settings
         self.resolver = resolver
+        self.pasteboard = pasteboard
         self.makeDesktop = makeDesktop
     }
 
@@ -36,7 +39,7 @@ final class AppEnvironment {
     func makeSession(for host: SavedHost) -> VNCSession {
         let options = settings.options
         let session = VNCSession(host: host, savedPassword: hosts.password(for: host),
-                                 resolver: resolver) { [makeDesktop] target in
+                                 resolver: resolver, pasteboard: pasteboard) { [makeDesktop] target in
             makeDesktop(target, options)
         }
         session.onRememberPassword = { [hosts] password in

@@ -90,6 +90,12 @@ struct GestureLogicTests {
         #expect(inputs(.dragEnded(CGPoint(x: 4, y: 4))) == [.buttonUp(.left, x: 4, y: 4)])
         #expect(inputs(.scroll(steps: .zero, at: .zero)).isEmpty)
         #expect(inputs(.scroll(steps: CGSize(width: 1, height: -2), at: CGPoint(x: 9, y: 9))) == [.scroll(dx: 1, dy: -2, x: 9, y: 9)])
+        #expect(inputs(.hover(CGPoint(x: 7, y: 8))) == [.move(x: 7, y: 8)])
+        #expect(inputs(.swipe(.left)) == [.keyDown(KeySym.controlLeft), .keyDown(KeySym.right), .keyUp(KeySym.right), .keyUp(KeySym.controlLeft)])
+        #expect(inputs(.swipe(.up)).contains(.keyDown(KeySym.up)))
+        #expect(SwipeDirection.right.keysym == KeySym.left)
+        #expect(SwipeDirection.down.keysym == KeySym.down)
+        #expect(SwipeDirection.allCases.map(\.name) == ["left", "right", "up", "down"])
     }
 }
 

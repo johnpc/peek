@@ -82,6 +82,23 @@ struct BonjourEndpointTests {
     }
 }
 
+struct FriendlyErrorTests {
+    @Test func mapsTransportFailuresToPlainLanguage() {
+        #expect(FriendlyError.message(for: NWError.posix(.ECONNREFUSED)) == FriendlyError.refused)
+        #expect(FriendlyError.message(for: NWError.posix(.ETIMEDOUT)) == FriendlyError.unreachable)
+        #expect(FriendlyError.message(for: NWError.posix(.EHOSTUNREACH)) == FriendlyError.unreachable)
+        #expect(FriendlyError.message(for: NWError.dns(-65554)) == FriendlyError.notFound)
+        #expect(FriendlyError.message(for: NWError.posix(.EPERM)) == nil)
+        let wrapped = NSError(domain: "peek", code: 1, userInfo: [NSUnderlyingErrorKey: NWError.posix(.ECONNREFUSED)])
+        #expect(FriendlyError.message(for: wrapped) == FriendlyError.refused)
+        enum Shell: Error { case failed(Error?) }
+        #expect(FriendlyError.message(for: Shell.failed(NWError.posix(.ENETUNREACH))) == FriendlyError.unreachable)
+        #expect(FriendlyError.message(for: Shell.failed(nil)) == nil)
+        let posix = NSError(domain: NSPOSIXErrorDomain, code: Int(ECONNREFUSED))
+        #expect(FriendlyError.message(for: posix) == FriendlyError.refused)
+    }
+}
+
 struct HostResolverTests {
     @Test func mockResolverRecordsRequests() async {
         let resolver = MockResolver(answers: ["a": "1.2.3.4"])

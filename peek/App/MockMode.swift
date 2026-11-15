@@ -12,6 +12,9 @@ enum MockMode {
     static let noHostsArgument = "--uitest-no-hosts"
     /// Pretend iOS declined Local Network access.
     static let noLocalNetworkArgument = "--uitest-no-local-network"
+    /// Pre-load the (mock) device pasteboard with text to paste.
+    static let pasteboardArgument = "--uitest-pasteboard"
+    static let fixturePasteboardText = "hello from your phone"
 
     static let fixtureHost = SavedHost(name: "Studio Mac", hostname: "studio.local", username: "john")
     static let fixturePassword = "secret"
@@ -43,6 +46,7 @@ enum MockMode {
                 status: args.contains(noLocalNetworkArgument) ? .localNetworkDenied : .searching)),
             settings: SettingsStore(defaults: defaults),
             resolver: MockResolver(answers: [fixtureNearby.serviceName: fixtureNearby.hostname]),
+            pasteboard: MockPasteboard(string: args.contains(pasteboardArgument) ? fixturePasteboardText : nil),
             makeDesktop: { _, _ in MockDesktop() }
         )
     }

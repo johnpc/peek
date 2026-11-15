@@ -112,6 +112,11 @@ screen appears, the status reads "Connected", the sign-in sheet shows, and the
 remote screen's accessibility value reports the **last input actually sent**
 ("click left at 640,400", "key esc", "hold ⌘") — never just that a screen opened.
 
+## Roadmap
+
+Feature order lives in `ROADMAP.md`; take the top unfinished item unless the
+owner says otherwise, and update it when something ships or is cut.
+
 ## Definition of done
 
 1. `bash scripts/quality.sh` green locally.

@@ -22,11 +22,11 @@ struct SettingsView: View {
                 }
                 Section {
                     Toggle("Share the screen", isOn: $settings.isShared)
-                    Toggle("Let the Mac scale the picture", isOn: $settings.isScalingEnabled)
+                    Toggle("Copy from the Mac automatically", isOn: $settings.syncsClipboard)
                 } header: {
                     Text("Connection")
                 } footer: {
-                    Text("Sharing keeps anyone already connected on the Mac instead of disconnecting them.")
+                    Text("Sharing keeps anyone already connected on the Mac instead of disconnecting them. With automatic copying, text you copy on the Mac is ready to paste here; the Paste key on the keyboard bar sends this device's clipboard to the Mac.")
                 }
                 Section("Help") {
                     Button("Show the touch controls tip again") { settings.hasSeenGestureTips = false }

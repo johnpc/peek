@@ -23,6 +23,7 @@ final class RemoteScreenScrollView: UIScrollView, UIScrollViewDelegate {
         // When fit to screen there is nothing to pan, so two fingers scroll the
         // remote machine instead; the content view's recognizer takes over.
         panGestureRecognizer.require(toFail: content.twoFingerScroll)
+        panGestureRecognizer.require(toFail: content.pointerScroll)
         content.canScrollWithTwoFingers = { [weak self] in self.map { !$0.isZoomed } ?? true }
         addSubview(content)
     }

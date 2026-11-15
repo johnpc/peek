@@ -17,7 +17,8 @@ struct DesktopOptions: Equatable {
     var colorDepth: Int = 24
     /// Share the desktop with whoever is already connected instead of kicking them.
     var isShared: Bool = true
-    var isScalingEnabled: Bool = true
+    /// Let text copied on the Mac land on this device's clipboard.
+    var syncsClipboard: Bool = true
 }
 
 enum RemoteDesktopEvent: Equatable {

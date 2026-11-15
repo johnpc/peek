@@ -34,6 +34,7 @@ class AcceptanceTests: XCTestCase {
         if scenario.tags.contains("@saved-password") { args.append("--uitest-saved-password") }
         if scenario.tags.contains("@no-hosts") { args.append("--uitest-no-hosts") }
         if scenario.tags.contains("@no-local-network") { args.append("--uitest-no-local-network") }
+        if scenario.tags.contains("@pasteboard") { args.append("--uitest-pasteboard") }
         app.launchArguments = args
         app.launch()
 

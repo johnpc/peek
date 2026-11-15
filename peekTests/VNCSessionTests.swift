@@ -308,6 +308,57 @@ struct VNCSessionInputTests {
     @Test func describeScrollWithoutLocation() {
         #expect(VNCSession.describe(.scroll(steps: CGSize(width: 1, height: 0), at: .zero), inputs: []) == "scroll 1,0")
         #expect(VNCSession.describe(.tap(.zero), inputs: [.text("x")]) == "click left")
+        #expect(VNCSession.describe(.hover(.zero), inputs: [.move(x: 3, y: 4)]) == "move at 3,4")
+        #expect(VNCSession.describe(.swipe(.up), inputs: []) == "swipe up")
+    }
+}
+
+struct VNCSessionClipboardTests {
+    private func connected(pasteboard: MockPasteboard) -> (VNCSession, MockDesktop) {
+        let desktop = MockDesktop()
+        desktop.requiresCredential = false
+        let throttle = FrameThrottle(interval: 0) { _, work in work() }
+        let session = VNCSession(host: SavedHost(name: "Studio", hostname: "s"), throttle: throttle,
+                                 pasteboard: pasteboard) { _ in desktop }
+        session.connect()
+        return (session, desktop)
+    }
+
+    @Test func pasteTypesTheDeviceClipboard() {
+        let (session, desktop) = connected(pasteboard: MockPasteboard(string: "hello"))
+        session.pasteFromDevice()
+        #expect(desktop.inputs.last == .text("hello"))
+        #expect(session.lastAction == "paste 5 characters")
+        #expect(session.toast == nil)
+    }
+
+    @Test func pasteRefusesEmptyAndHugeClipboards() {
+        let (session, desktop) = connected(pasteboard: MockPasteboard())
+        session.pasteFromDevice()
+        #expect(session.toast == "Nothing to paste")
+        #expect(!desktop.inputs.contains { if case .text = $0 { return true } else { return false } })
+        let huge = MockPasteboard(string: String(repeating: "x", count: VNCSession.pasteLimit + 1))
+        let (big, bigDesktop) = connected(pasteboard: huge)
+        big.pasteFromDevice()
+        #expect(big.toast?.hasPrefix("That's too much text") == true)
+        #expect(!bigDesktop.inputs.contains { if case .text = $0 { return true } else { return false } })
+    }
+
+    @Test func clipboardChangesWhileConnectedAreCreditedToTheMac() {
+        let pasteboard = MockPasteboard(string: "old")
+        let (session, _) = connected(pasteboard: pasteboard)
+        session.pasteboardDidChange()
+        #expect(session.toast == nil, "nothing changed since connecting")
+        pasteboard.string = "from the mac"
+        session.pasteboardDidChange()
+        #expect(session.toast == "Copied from Studio")
+        session.toast = nil
+        session.pasteboardDidChange()
+        #expect(session.toast == nil, "the same change is reported once")
+        session.disconnect()
+        pasteboard.string = "later"
+        session.pasteboardDidChange()
+        #expect(session.toast == nil, "only while connected")
     }
 }
 

@@ -25,14 +25,15 @@ is what it was built for.
 | Remember passwords in the iOS keychain | ✅ |
 | Live remote screen in a native zoom view: pinch around your fingers, two-finger pan while zoomed, two (or three) fingers scroll the Mac | ✅ |
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
+| Three-finger flicks = macOS gestures (switch Spaces, Mission Control, App Exposé) | ✅ |
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
-| Color depth (8/16/24-bit) and shared-screen settings | ✅ |
+| Color depth (8/16/24-bit) and shared-screen settings; plain-language connection errors | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |
 | Survives quick app switches; auto-reconnects (with your saved password) after longer ones, keeping the last screen up | ✅ |
 | Nearby Macs are re-resolved by name at connect time, so address changes don't strand them | ✅ |
-| Clipboard sync | ⬜ |
+| Clipboard: text copied on the Mac lands on the device; Paste key sends the device clipboard to the Mac | ✅ |
 | Hardware keyboard on iPad (arrows, Esc, Tab, ⌘/⌃/⌥ shortcuts) | ✅ |
-| Trackpad / mouse on iPad | ⬜ |
+| Trackpad / mouse on iPad: hover moves the cursor, click, right-click, scroll wheel | ✅ |
 | Wake-on-LAN | ⬜ |
 
 ## Screenshots
