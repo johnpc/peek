@@ -23,5 +23,6 @@ struct ContentView: View {
         .fullScreenCover(item: $model.session) { session in
             SessionView(session: session, settings: environment.settings, onClose: model.closeSession)
         }
+        .onOpenURL { url in model.open(url) }
     }
 }

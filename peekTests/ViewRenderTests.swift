@@ -74,6 +74,8 @@ final class ViewRenderTests: XCTestCase {
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
         render(ReconnectingPill())
+        render(EdgeRevealStrip {})
+        XCTAssertEqual(EdgeRevealStrip.height, 24)
         var toastDismissed = 0
         render(ToastView(text: "Copied from Mac") { toastDismissed += 1 })
         XCTAssertEqual(toastDismissed, 0)

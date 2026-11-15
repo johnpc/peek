@@ -35,6 +35,13 @@ struct HostEditorView: View {
                 } footer: {
                     Text("For a Mac, use the account name and password you log in with. Leave blank to be asked when connecting.")
                 }
+                if !draft.isNew, let link = DeepLink.url(for: SavedHost(name: draft.name, hostname: draft.trimmedHostname)) {
+                    Section {
+                        ShareLink(item: link) { Label("Share Shortcut Link", systemImage: "link") }
+                    } footer: {
+                        Text("Open this link from a Shortcut or the Action Button to connect in one tap: \(link.absoluteString)")
+                    }
+                }
             }
             .navigationTitle(draft.title)
             .navigationBarTitleDisplayMode(.inline)

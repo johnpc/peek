@@ -23,10 +23,12 @@ item ships as its own slice (spec → implement → gate → TestFlight).
    Screen, Log Out). Media keys left out: macOS's VNC server ignores them.
 6. ~~**Live thumbnail per saved Mac.**~~ Shipped: the last frame is saved as a
    small JPEG when you hang up and shown in the list row.
-7. **Edge-swipe to reveal the toolbar** when it is tucked away.
-8. **Shortcuts / URL scheme** (`peek://connect?host=…`) so a Home Screen
-   shortcut or Siri opens straight into a Mac. Follow-on: add a "Mac mini"
-   launch shortcut to github.com/johnpc/shortcuts once this ships.
+7. ~~**Edge-swipe to reveal the toolbar**~~ Shipped: swipe down (or tap) the top
+   edge while the controls are hidden.
+8. ~~**Shortcuts / URL scheme**~~ Shipped: `peek://connect?host=<name or address>`
+   connects (or pre-fills the add form for an unknown address); the edit screen
+   has "Share Shortcut Link". Follow-on (pending): add a "Mac mini" item to
+   github.com/johnpc/shortcuts.
 9. **Wake-on-LAN.** Optional MAC address per host; "Wake" button when the Mac
    is unreachable.
 10. **Remote access away from home.** No relay of our own; document the Tailscale

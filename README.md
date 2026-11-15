@@ -35,6 +35,7 @@ is what it was built for.
 | Clipboard: text copied on the Mac lands on the device; Paste key sends the device clipboard to the Mac | ✅ |
 | Hardware keyboard on iPad (arrows, Esc, Tab, ⌘/⌃/⌥ shortcuts) | ✅ |
 | Trackpad / mouse on iPad: hover moves the cursor, click, right-click, scroll wheel | ✅ |
+| `peek://connect?host=…` links for Shortcuts, Siri and the Action Button (share one from a computer's edit screen) | ✅ |
 | Wake-on-LAN | ⬜ |
 
 ## Screenshots

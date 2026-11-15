@@ -8,15 +8,15 @@ struct SessionView: View {
     @ObservedObject var session: VNCSession
     @ObservedObject var settings: SettingsStore
     let onClose: () -> Void
-    @State private var showKeyboard = false
-    @State private var isToolbarCollapsed = false
-    @State private var autoCollapseArmed = true
+    @State var showKeyboard = false
+    @State var isToolbarCollapsed = false
+    @State var autoCollapseArmed = true
     @State private var isZoomed = false
     @State private var fitRequest = 0
     @State private var lifecycle = SessionLifecycle()
     @Environment(\.scenePhase) private var scenePhase
 
-    private var isShowingScreen: Bool { session.state == .connected && session.frame != nil }
+    var isShowingScreen: Bool { session.state == .connected && session.frame != nil }
 
     var body: some View {
         ZStack {
@@ -43,6 +43,9 @@ struct SessionView: View {
                 SessionToolbar(session: session, settings: settings, showKeyboard: $showKeyboard,
                                isCollapsed: $isToolbarCollapsed, isZoomed: isZoomed,
                                onFit: { fitRequest += 1 }, onClose: onClose)
+                if isToolbarCollapsed {
+                    EdgeRevealStrip { isToolbarCollapsed = false }
+                }
                 Spacer()
                 if isShowingScreen, !settings.hasSeenGestureTips, !showKeyboard {
                     GestureTipsView { settings.hasSeenGestureTips = true }
@@ -80,20 +83,4 @@ struct SessionView: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
     }
-
-    private var credentialPresented: Binding<Bool> {
-        Binding(get: { session.credentialRequest != nil },
-                set: { if !$0 { session.cancelCredential() } })
-    }
-
-    /// Once the screen is up and the tips are gone, tuck the toolbar away after
-    /// a moment; the chevron brings it back. One-shot: as soon as the user
-    /// collapses or expands it themselves, the timer stands down.
-    private func autoCollapseToolbar() async {
-        guard isShowingScreen, settings.hasSeenGestureTips, !isToolbarCollapsed else { return }
-        try? await Task.sleep(for: .seconds(SessionView.autoCollapseDelay))
-        if !Task.isCancelled, autoCollapseArmed, !showKeyboard { isToolbarCollapsed = true }
-    }
-
-    static let autoCollapseDelay: TimeInterval = 6
 }

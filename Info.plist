@@ -9,6 +9,19 @@
          types the app browses before it will show the local-network prompt. -->
     <key>NSLocalNetworkUsageDescription</key>
     <string>peek uses the local network to find Macs with Screen Sharing turned on and to connect to them.</string>
+    <!-- peek://connect?host=<saved name or address> opens straight into a computer
+         (Shortcuts, the Action Button, Siri "Open URL"). -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.johncorser.peek</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>peek</string>
+            </array>
+        </dict>
+    </array>
     <key>NSBonjourServices</key>
     <array>
         <string>_rfb._tcp</string>

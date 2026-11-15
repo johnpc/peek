@@ -114,7 +114,51 @@ struct HostDraftTests {
     }
 }
 
+struct DeepLinkTests {
+    @Test func parsesConnectLinks() {
+        #expect(DeepLink.parse(URL(string: "peek://connect?host=Studio%20Mac")!) == .connect(host: "Studio Mac"))
+        #expect(DeepLink.parse(URL(string: "PEEK://Connect?host=mini")!) == .connect(host: "mini"))
+        #expect(DeepLink.parse(URL(string: "peek://connect")!) == nil)
+        #expect(DeepLink.parse(URL(string: "peek://connect?host=%20")!) == nil)
+        #expect(DeepLink.parse(URL(string: "peek://other?host=x")!) == nil)
+        #expect(DeepLink.parse(URL(string: "https://connect?host=x")!) == nil)
+    }
+
+    @Test func buildsAndMatches() {
+        let studio = SavedHost(name: "Studio Mac", hostname: "studio.local")
+        let bare = SavedHost(name: "", hostname: "10.0.0.5", port: 5901)
+        let url = DeepLink.url(for: studio)
+        #expect(url?.absoluteString == "peek://connect?host=Studio%20Mac")
+        #expect(DeepLink.parse(url!) == .connect(host: "Studio Mac"))
+        #expect(DeepLink.match("studio mac", in: [studio, bare]) == studio)
+        #expect(DeepLink.match("STUDIO.LOCAL", in: [studio, bare]) == studio)
+        #expect(DeepLink.match("10.0.0.5:5901", in: [studio, bare]) == bare)
+        #expect(DeepLink.match("nope", in: [studio, bare]) == nil)
+        let mini = SavedHost(name: "john’s Mac Mini", hostname: "fe80::1%en0", serviceName: "john’s Mac Mini")
+        #expect(DeepLink.match("John's Mac Mini", in: [mini]) == mini, "straight apostrophe matches the curly one")
+        #expect(DeepLink.match("john’s mac mini", in: [mini]) == mini)
+        let renamed = SavedHost(name: "Office", hostname: "10.0.0.9", serviceName: "john’s Mac Mini")
+        #expect(DeepLink.match("john's mac mini", in: [renamed]) == renamed, "Bonjour name still matches after a rename")
+    }
+}
+
 struct HostListModelTests {
+    @Test func deepLinksConnectOrPrefillTheForm() {
+        let env = MockMode.environment(["--uitest-mock", "--uitest-saved-password"])
+        let model = HostListModel(environment: env)
+        model.open(URL(string: "peek://connect?host=studio%20mac")!)
+        #expect(model.session?.host.name == "Studio Mac")
+        model.closeSession()
+        model.open(URL(string: "peek://connect?host=office.local:5901")!)
+        #expect(model.session == nil)
+        #expect(model.draft?.hostname == "office.local")
+        #expect(model.draft?.portText == "5901")
+        #expect(model.draft?.isNew == true)
+        model.draft = nil
+        model.open(URL(string: "https://example.com")!)
+        #expect(model.draft == nil && model.session == nil)
+    }
+
     @Test func sheetsAndSessions() {
         let env = MockMode.environment(["--uitest-mock"])
         let model = HostListModel(environment: env)

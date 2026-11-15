@@ -172,6 +172,16 @@ enum StepDefinitions {
         }
 
         // MARK: Settings
+        r.define("I swipe down from the top edge") { w in
+            let strip = w.app.descendants(matching: .any)["edgeReveal"].firstMatch
+            XCTAssertTrue(strip.waitForExistence(timeout: short))
+            strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+                .press(forDuration: 0.05, thenDragTo: strip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 4)))
+        }
+        r.define("I open the link \"(.+)\"") { w in
+            guard let url = URL(string: w.capture()) else { return XCTFail("bad url") }
+            w.app.open(url)
+        }
         r.define("I open Settings") { w in tap(w.app.buttons["Settings"]) }
         r.define("the password field should be focused") { w in
             let field = w.app.secureTextFields["Password"]

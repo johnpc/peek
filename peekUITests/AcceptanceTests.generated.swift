@@ -123,6 +123,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
         runScenario(feature: "session_controls.feature", scenario: "The controls can be tucked away for a full-bleed screen")
     }
 
+    func test_Swiping_down_from_the_top_edge_brings_the_controls_back() {
+        runScenario(feature: "session_controls.feature", scenario: "Swiping down from the top edge brings the controls back")
+    }
+
     func test_The_toolbar_tucks_itself_away_once_the_screen_is_up() {
         runScenario(feature: "session_controls.feature", scenario: "The toolbar tucks itself away once the screen is up")
     }
@@ -135,6 +139,20 @@ final class SettingsFeatureTests: AcceptanceTests {
 
     func test_Color_depth_can_be_changed() {
         runScenario(feature: "settings.feature", scenario: "Color depth can be changed")
+    }
+
+}
+
+
+/// Shortcut links
+final class ShortcutsFeatureTests: AcceptanceTests {
+
+    func test_A_peek_link_connects_to_the_named_computer() {
+        runScenario(feature: "shortcuts.feature", scenario: "A peek link connects to the named computer")
+    }
+
+    func test_A_peek_link_to_an_unknown_address_offers_to_add_it() {
+        runScenario(feature: "shortcuts.feature", scenario: "A peek link to an unknown address offers to add it")
     }
 
 }

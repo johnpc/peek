@@ -52,6 +52,20 @@ final class HostListModel: ObservableObject {
         session = nil
     }
 
+    /// A `peek://` link: connect to the matching computer, or offer to add it.
+    func open(_ url: URL) {
+        guard case .connect(let query)? = DeepLink.parse(url) else { return }
+        if let host = DeepLink.match(query, in: environment.hosts.hosts) {
+            session = nil
+            connect(host)
+        } else {
+            let split = HostDraft.split(query)
+            var draft = HostDraft(host: SavedHost(name: "", hostname: split.host, port: split.port ?? SavedHost.defaultPort))
+            draft.isNew = true
+            self.draft = draft
+        }
+    }
+
     /// Nearby computers not already in the saved list.
     func nearby(_ discovered: [DiscoveredHost], saved: [SavedHost]) -> [DiscoveredHost] {
         DiscoveryLogic.excludingSaved(discovered, saved: saved)
