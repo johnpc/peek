@@ -61,3 +61,5 @@ so UIKit glues it to the top of the keys; the session layout ignores the keyboar
 and `RemoteScreenScrollView` re-fits the remote screen into the area the keyboard leaves
 (`+Keyboard.swift`). Pinned by the scenario "The key bar rides on top of the keyboard" and
 verified with screenshots in the PR (simulator vs. the fake server, and the real Mac mini).
+
+Follow-up (same day): the bar no longer repeats return and backspace (the system keyboard has them), so the arrows fit on an iPhone without scrolling as far.

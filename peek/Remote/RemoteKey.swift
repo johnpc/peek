@@ -5,6 +5,10 @@ enum RemoteKey: CaseIterable, Hashable {
     case escape, tab, `return`, delete, forwardDelete
     case upArrow, downArrow, leftArrow, rightArrow
 
+    /// What the key bar shows. Return and backspace are already on the system
+    /// keyboard, so they stay off the bar and the arrows fit on a phone.
+    static let barKeys: [RemoteKey] = [.escape, .tab, .forwardDelete, .upArrow, .downArrow, .leftArrow, .rightArrow]
+
     var label: String {
         switch self {
         case .escape: return "esc"

@@ -27,7 +27,7 @@ is what it was built for.
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | Three-finger flicks = macOS gestures (switch Spaces, Mission Control, App Exposé) | ✅ |
 | The Mac's own pointer is drawn; optional touchpad mode (drag moves the pointer, tap clicks there) | ✅ |
-| On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧, esc / tab / return / delete / arrows, an F1–F12 page, and a Mac menu (Spotlight, Switch App, Lock Screen, Screenshot, …) | ✅ |
+| On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧, esc / tab / ⌦ / arrows riding on top of the system keyboard, an F1–F12 page, and a Mac menu (Spotlight, Switch App, Lock Screen, Screenshot, …) | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings; plain-language connection errors | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |
 | Survives quick app switches; auto-reconnects (with your saved password) after longer ones, keeping the last screen up | ✅ |
