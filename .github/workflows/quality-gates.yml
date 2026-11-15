@@ -150,6 +150,10 @@ jobs:
               CODE_SIGNING_ALLOWED=NO \
               -quiet
 
+            # Run the export inside the logged-in user's session: from the runner's
+            # LaunchDaemon context, xcodebuild crashes (SIGTRAP in AppSSO/XPC,
+            # xpc_connection_set_target_uid misuse) while fetching the app record.
+            sudo -n launchctl asuser "$(id -u)" sudo -n -u "$(id -un)" env HOME="$HOME" \
             xcodebuild -exportArchive \
               -archivePath ~/Desktop/peek.xcarchive \
               -exportOptionsPlist /tmp/ExportOptions.plist \
@@ -167,6 +171,7 @@ jobs:
           STATUS=$?
           set -e
           echo "$OUTPUT"
+          echo "archive/export exit status: $STATUS"
           [ "$STATUS" -eq 0 ] && exit 0
 
           if echo "$OUTPUT" | grep -q "Error Downloading App Information"; then

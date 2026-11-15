@@ -8,7 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		7E1F0B01A1B2C3D4E5F60001 /* RoyalVNCKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F0B01A1B2C3D4E5F60011 /* RoyalVNCKit */; };
+		7E1F0B01A1B2C3D4E5F60002 /* RoyalVNCKit in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 7E1F0B01A1B2C3D4E5F60011 /* RoyalVNCKit */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7E1F0B0AA1B2C3D4E5F60001 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				7E1F0B01A1B2C3D4E5F60002 /* RoyalVNCKit in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXContainerItemProxy section */
 		7E1F0B02A1B2C3D4E5F60001 /* PBXContainerItemProxy */ = {
@@ -107,6 +122,7 @@
 				7E1F0B07A1B2C3D4E5F60001 /* Sources */,
 				7E1F0B05A1B2C3D4E5F60001 /* Frameworks */,
 				7E1F0B08A1B2C3D4E5F60001 /* Resources */,
+				7E1F0B0AA1B2C3D4E5F60001 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
