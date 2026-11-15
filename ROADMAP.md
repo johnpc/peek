@@ -48,3 +48,11 @@ item ships as its own slice (spec → implement → gate → TestFlight).
 
 Jump's Fluid / Screens' accelerated transport, RDP, SSH tunnelling, remote
 audio, file transfer, multi-monitor selection beyond what the VNC server sends.
+
+## 🔴 Follow-up: keyboard is broken on device (reported 2026-11-15)
+
+John: "the keyboard in peek is totally borked" (on-device, after builds 5–11). Not yet
+reproduced. Plan: reproduce on the simulator against the mini, fix, and **verify with
+screenshots** of each keyboard state (system keyboard up, key bar visible, Mac menu page,
+typing into Safari on the mini) attached to the PR. Suspects: KeyboardBar overlaying the
+keyboard, focus loss on KeyInputView, key-bar paging, modifier keysyms.
