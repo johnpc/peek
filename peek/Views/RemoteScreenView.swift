@@ -7,8 +7,7 @@ struct RemoteScreenView: View {
     let screenSize: CGSize
     let lastAction: String?
     let onGesture: (ScreenGesture, ScreenTransform) -> Void
-
-    @State private var zoomState = ZoomState()
+    @Binding var zoomState: ZoomState
 
     var body: some View {
         GeometryReader { geometry in
@@ -30,7 +29,7 @@ struct RemoteScreenView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityIdentifier("remoteScreen")
-        .accessibilityLabel("Remote screen")
+        .accessibilityLabel("Remote screen \(Int(screenSize.width))×\(Int(screenSize.height))")
         .accessibilityValue(lastAction ?? "")
     }
 }

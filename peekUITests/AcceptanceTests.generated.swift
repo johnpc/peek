@@ -45,6 +45,10 @@ final class DiscoveryFeatureTests: AcceptanceTests {
         runScenario(feature: "discovery.feature", scenario: "Saving a nearby computer pre-fills its address")
     }
 
+    func test_Declined_Local_Network_access_is_explained_instead_of_spinning_forever() {
+        runScenario(feature: "discovery.feature", scenario: "Declined Local Network access is explained instead of spinning forever")
+    }
+
 }
 
 
@@ -61,6 +65,10 @@ final class HostsFeatureTests: AcceptanceTests {
 
     func test_Adding_a_computer_by_address() {
         runScenario(feature: "hosts.feature", scenario: "Adding a computer by address")
+    }
+
+    func test_A_port_can_be_typed_after_the_address() {
+        runScenario(feature: "hosts.feature", scenario: "A port can be typed after the address")
     }
 
     func test_Save_requires_a_hostname() {
@@ -95,6 +103,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
 
     func test_The_controls_can_be_tucked_away_for_a_full_bleed_screen() {
         runScenario(feature: "session_controls.feature", scenario: "The controls can be tucked away for a full-bleed screen")
+    }
+
+    func test_The_toolbar_tucks_itself_away_once_the_screen_is_up() {
+        runScenario(feature: "session_controls.feature", scenario: "The toolbar tucks itself away once the screen is up")
     }
 
 }

@@ -10,7 +10,7 @@ struct GestureTipsView: View {
         ("hand.point.up.left.and.text", "Two-finger tap for a right click"),
         ("hand.draw", "Press and hold, then drag to move things"),
         ("arrow.up.and.down", "Drag with two fingers to scroll"),
-        ("arrow.up.left.and.arrow.down.right.magnifyingglass", "Pinch to zoom, then move to pan"),
+        ("arrow.up.left.and.down.right.magnifyingglass", "Pinch to zoom, then move to pan"),
     ]
 
     var body: some View {

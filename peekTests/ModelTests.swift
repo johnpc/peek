@@ -53,11 +53,17 @@ struct RemoteStateTests {
 }
 
 struct RemoteInputTests {
-    @Test func modifiersMapToKeysyms() {
-        #expect(Modifier.command.keysym == KeySym.metaLeft)
-        #expect(Modifier.option.keysym == KeySym.altLeft)
-        #expect(Modifier.control.keysym == KeySym.controlLeft)
-        #expect(Modifier.shift.keysym == KeySym.shiftLeft)
+    @Test func modifierKeymaps() {
+        let standard = ModifierKeymap.standard
+        #expect(standard.keysym(for: .command) == KeySym.superLeft)
+        #expect(standard.keysym(for: .option) == KeySym.altLeft)
+        #expect(standard.keysym(for: .control) == KeySym.controlLeft)
+        #expect(standard.keysym(for: .shift) == KeySym.shiftLeft)
+        let apple = ModifierKeymap.appleRemoteDesktop
+        #expect(apple.keysym(for: .command) == KeySym.hyperLeft)
+        #expect(apple.keysym(for: .option) == KeySym.metaLeft)
+        #expect(apple.keysym(for: .control) == KeySym.controlLeft)
+        #expect(apple.keysym(for: .shift) == KeySym.shiftLeft)
         #expect(Modifier.allCases.map(\.symbol) == ["⌘", "⌥", "⌃", "⇧"])
     }
 

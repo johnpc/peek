@@ -5,22 +5,24 @@ import Foundation
 /// — the way ⌘ works on a touch keyboard where you can't hold two keys.
 struct ModifierLogic: Equatable {
     private(set) var held: Set<Modifier> = []
+    /// Chosen per server: Apple Remote Desktop wants different keysyms for ⌘/⌥.
+    var keymap: ModifierKeymap = .standard
 
     /// The key events for toggling one modifier.
     mutating func toggle(_ modifier: Modifier) -> [RemoteInput] {
         if held.contains(modifier) {
             held.remove(modifier)
-            return [.keyUp(modifier.keysym)]
+            return [.keyUp(keymap.keysym(for: modifier))]
         }
         held.insert(modifier)
-        return [.keyDown(modifier.keysym)]
+        return [.keyDown(keymap.keysym(for: modifier))]
     }
 
     /// `press`, followed by the release of every held modifier.
     mutating func wrap(_ press: [RemoteInput]) -> [RemoteInput] {
         let releases = Modifier.allCases
             .filter { held.contains($0) }
-            .map { RemoteInput.keyUp($0.keysym) }
+            .map { RemoteInput.keyUp(keymap.keysym(for: $0)) }
         held = []
         return press + releases
     }

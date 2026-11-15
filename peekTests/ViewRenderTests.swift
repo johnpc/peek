@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UIKit
 import XCTest
@@ -34,7 +35,9 @@ final class ViewRenderTests: XCTestCase {
         render(HostRow(host: SavedHost(name: "A", hostname: "a", rememberPassword: true)))
         render(EmptyHostsView())
         render(List { NearbySection(nearby: [MockMode.fixtureNearby]) { _ in } })
-        render(List { NearbySearchingRow() })
+        render(List { NearbyStatusRow(status: .searching) })
+        render(List { NearbyStatusRow(status: .localNetworkDenied) })
+        render(List { NearbyStatusRow(status: .failed("boom")) })
     }
 
     func testEditorAndSettings() {
@@ -60,8 +63,13 @@ final class ViewRenderTests: XCTestCase {
         Haptics.click()
         Haptics.dragStart()
         render(KeyboardBar(session: session))
-        render(SessionToolbar(session: session, showKeyboard: .constant(true), isCollapsed: .constant(false), onClose: {}))
-        render(SessionToolbar(session: session, showKeyboard: .constant(false), isCollapsed: .constant(true), onClose: {}))
+        var zoomed = ZoomState()
+        zoomed.pinch(by: 2, centroidDelta: .zero)
+        render(SessionToolbar(session: session, showKeyboard: .constant(true), isCollapsed: .constant(false),
+                              zoomState: .constant(zoomed), onClose: {}))
+        render(SessionToolbar(session: session, showKeyboard: .constant(false), isCollapsed: .constant(true),
+                              zoomState: .constant(ZoomState()), onClose: {}))
+        render(PasswordField(text: .constant("x"), revealed: true))
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
         session.retry()
@@ -73,7 +81,8 @@ final class ViewRenderTests: XCTestCase {
         guard let frame = MockFrame.render(size: CGSize(width: 200, height: 100)) else {
             return XCTFail("no frame")
         }
-        render(RemoteScreenView(frame: frame, screenSize: CGSize(width: 200, height: 100), lastAction: "x") { _, _ in })
+        render(RemoteScreenView(frame: frame, screenSize: CGSize(width: 200, height: 100), lastAction: "x",
+                                onGesture: { _, _ in }, zoomState: .constant(ZoomState())))
     }
 
     func testKeyInputViewForwardsTyping() {

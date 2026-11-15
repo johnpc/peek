@@ -24,6 +24,13 @@ struct MockModeTests {
         #expect(session.state == .connected)
     }
 
+    @Test func noLocalNetworkFlagReportsDenied() {
+        let env = MockMode.environment(["--uitest-mock", "--uitest-no-local-network"])
+        env.discovery.start()
+        #expect(env.discovery.status == .localNetworkDenied)
+        #expect(env.discovery.nearby.isEmpty)
+    }
+
     @Test func noHostsFlagStartsEmpty() {
         let env = MockMode.environment(["--uitest-mock", "--uitest-no-hosts"])
         #expect(env.hosts.hosts.isEmpty)
@@ -71,6 +78,20 @@ struct HostDraftTests {
         #expect(draft.port == nil)
         draft.portText = " 5901 "
         #expect(draft.port == 5901)
+    }
+
+    @Test func hostnameMayCarryAPort() {
+        var draft = HostDraft()
+        draft.hostname = "mac.local:5901"
+        #expect(draft.trimmedHostname == "mac.local")
+        #expect(draft.effectivePort == 5901)
+        #expect(draft.makeHost()?.address == "mac.local:5901")
+        draft.hostname = "fe80::1"
+        #expect(draft.trimmedHostname == "fe80::1")
+        #expect(draft.effectivePort == 5900)
+        draft.hostname = "mac.local:notaport"
+        #expect(draft.trimmedHostname == "mac.local:notaport")
+        #expect(HostDraft.split("mac.local:0").port == nil)
     }
 
     @Test func keepsIdentityAndTrimsFields() {

@@ -29,7 +29,8 @@ enum StepDefinitions {
         }
         r.define("I tap \"(.+)\"") { w in tap(w.app.buttons[w.capture()]) }
         r.define("the \"(.+)\" button should not be visible") { w in
-            XCTAssertTrue(waitUntilGone(w.app.buttons[w.capture()]))
+            let button = w.app.buttons[w.capture()]
+            XCTAssertTrue(waitUntil({ !button.exists }, timeout: medium), "\(button) should disappear")
         }
         r.define("the \"(.+)\" button should be disabled") { w in
             let button = w.app.buttons[w.capture()]
@@ -39,7 +40,12 @@ enum StepDefinitions {
         r.define("I turn on \"(.+)\"") { w in
             let toggle = w.app.switches[w.capture()]
             XCTAssertTrue(toggle.waitForExistence(timeout: short))
-            if (toggle.value as? String) != "1" { toggle.tap() }
+            // Tap the switch knob itself: a tap on the row's label doesn't flip a SwiftUI Toggle.
+            if (toggle.value as? String) != "1" {
+                toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+            }
+            XCTAssertTrue(waitUntil { (toggle.value as? String) == "1" },
+                          "\(w.capture()) should be on, value is \(String(describing: toggle.value))")
         }
 
         // MARK: Computer list
@@ -117,6 +123,12 @@ enum StepDefinitions {
 
         // MARK: Settings
         r.define("I open Settings") { w in tap(w.app.buttons["Settings"]) }
+        r.define("the password field should be focused") { w in
+            let field = w.app.secureTextFields["Password"]
+            XCTAssertTrue(field.waitForExistence(timeout: short))
+            XCTAssertTrue(waitUntil { (field.value(forKey: "hasKeyboardFocus") as? Bool) == true },
+                          "password field should have keyboard focus")
+        }
         r.define("I choose the \"(.+)\" color depth") { w in tap(w.app.buttons[w.capture()]) }
         r.define("the \"(.+)\" color depth should be selected") { w in
             let segment = w.app.buttons[w.capture()]
@@ -130,9 +142,17 @@ enum StepDefinitions {
         w.app.descendants(matching: .any)["remoteScreen"].firstMatch
     }
 
+    /// Taps an element; if the session toolbar auto-collapsed, expands it and retries.
     private static func tap(_ element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: medium), "\(element) should exist")
-        element.tap()
+        for _ in 0..<3 {
+            if element.waitForExistence(timeout: 3) {
+                element.tap()
+                return
+            }
+            let reveal = XCUIApplication().buttons["Show controls"]
+            if reveal.waitForExistence(timeout: 1) { reveal.tap() }
+        }
+        XCTFail("\(element) should exist")
     }
 
     private static func waitUntil(_ condition: @escaping () -> Bool, timeout: TimeInterval = short) -> Bool {

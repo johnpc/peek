@@ -22,6 +22,13 @@ Feature: Saved computers
     And I tap "Save"
     Then the "Office iMac" computer should be listed
 
+  Scenario: A port can be typed after the address
+    Given the app is launched
+    When I tap "Add Computer"
+    And I enter "office.local:5901" as the hostname
+    And I tap "Save"
+    Then I should see "office.local:5901"
+
   Scenario: Save requires a hostname
     Given the app is launched
     When I tap "Add Computer"

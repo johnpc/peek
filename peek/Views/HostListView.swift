@@ -26,8 +26,8 @@ struct HostListView: View {
             }
             if !nearby.isEmpty {
                 NearbySection(nearby: nearby) { model.add($0) }
-            } else if !hosts.hosts.isEmpty, discovery.nearby.isEmpty {
-                NearbySearchingRow()
+            } else if !hosts.hosts.isEmpty || discovery.status != .searching {
+                NearbyStatusRow(status: discovery.status)
             }
         }
         .navigationTitle("peek")

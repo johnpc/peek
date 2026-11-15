@@ -6,6 +6,7 @@ import Network
 /// opening a TCP connection to it and reading the remote endpoint.
 final class BonjourBrowser: HostBrowser {
     var onHostsChanged: (([DiscoveredHost]) -> Void)?
+    var onStatusChanged: ((DiscoveryStatus) -> Void)?
 
     private var browser: NWBrowser?
     private var resolved: [String: DiscoveredHost] = [:]
@@ -16,6 +17,10 @@ final class BonjourBrowser: HostBrowser {
         let browser = NWBrowser(for: descriptor, using: .tcp)
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             Task { @MainActor in self?.update(Array(results.map(\.endpoint))) }
+        }
+        browser.stateUpdateHandler = { [weak self] state in
+            let status = BonjourEndpoint.status(for: state)
+            Task { @MainActor in self?.onStatusChanged?(status) }
         }
         browser.start(queue: .main)
         self.browser = browser

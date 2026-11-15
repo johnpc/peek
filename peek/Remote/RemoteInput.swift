@@ -16,15 +16,6 @@ enum Modifier: CaseIterable, Hashable {
         case .shift: return "⇧"
         }
     }
-
-    var keysym: UInt32 {
-        switch self {
-        case .command: return KeySym.metaLeft
-        case .option: return KeySym.altLeft
-        case .control: return KeySym.controlLeft
-        case .shift: return KeySym.shiftLeft
-        }
-    }
 }
 
 /// Everything the session can send to the remote machine. Coordinates are in

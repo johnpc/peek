@@ -13,3 +13,9 @@ Feature: Nearby computers
     Then the hostname field should contain "johns-mac-mini.local"
     When I tap "Save"
     Then the "John's Mac mini" computer should be listed
+
+  @no-local-network
+  Scenario: Declined Local Network access is explained instead of spinning forever
+    Given the app is launched
+    Then I should see "Local Network access is off"
+    And I should see "Open Settings"

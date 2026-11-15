@@ -13,7 +13,8 @@ import XCTest
 ///
 /// The app launches in mock mode (`--uitest-mock`): a fixture host, an
 /// in-memory keychain, a fake Bonjour browser and a fake desktop. Tags:
-/// `@saved-password` seeds the fixture host's password; `@no-hosts` starts empty.
+/// `@saved-password` seeds the fixture host's password; `@no-hosts` starts empty;
+/// `@no-local-network` pretends iOS declined Local Network access.
 class AcceptanceTests: XCTestCase {
 
     func runScenario(feature fileName: String, scenario name: String,
@@ -32,6 +33,7 @@ class AcceptanceTests: XCTestCase {
         var args = ["--uitest-mock"]
         if scenario.tags.contains("@saved-password") { args.append("--uitest-saved-password") }
         if scenario.tags.contains("@no-hosts") { args.append("--uitest-no-hosts") }
+        if scenario.tags.contains("@no-local-network") { args.append("--uitest-no-local-network") }
         app.launchArguments = args
         app.launch()
 

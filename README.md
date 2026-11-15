@@ -20,7 +20,7 @@ is what it was built for.
 | | Status |
 |---|---|
 | Nearby Macs appear automatically (Bonjour `_rfb._tcp`) | ✅ |
-| Save computers by name/address/port; edit, delete | ✅ |
+| Save computers by name/address/port (or `host:port`); edit, delete | ✅ |
 | Apple Remote Desktop sign-in (Mac account + password) and classic VNC passwords | ✅ |
 | Remember passwords in the iOS keychain | ✅ |
 | Live remote screen, pinch to zoom, pinch-and-move to pan | ✅ |
@@ -33,9 +33,23 @@ is what it was built for.
 | Hardware keyboard & trackpad on iPad | ⬜ |
 | Wake-on-LAN | ⬜ |
 
+## Screenshots
+
+| Your computers | Add by address | First connection | Connected to a real Mac mini |
+|---|---|---|---|
+| ![Host list](docs/shots/hosts.png) | ![Editor](docs/shots/editor.png) | ![Controls tip](docs/shots/session-tips.png) | ![Mac mini session](docs/shots/real-mac-mini.png) |
+
+The last one is the app in the iOS Simulator signed in to a Mac mini's own
+Screen Sharing (Apple Remote Desktop authentication), captured by an automated
+end-to-end run — not a mock. The same run then drove the Mac entirely through
+peek: clicked through macOS's first-login setup, opened Safari from the Dock,
+pressed ⌘L, typed `amazon.com`, and signed in to Amazon with the on-screen
+keyboard (Esc to dismiss a passkey sheet, Return to submit).
+
 ## Install
 
-- **TestFlight:** coming with the first build from CI.
+- **TestFlight:** builds upload automatically from CI on every push to `main`
+  (App Store name: *peek – Screen Sharing*). Public link to follow.
 - **Requires** iOS 26 or later.
 
 ## How to use it

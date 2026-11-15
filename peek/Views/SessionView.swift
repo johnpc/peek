@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Full-screen remote desktop: the screen, a thin toolbar, the optional
@@ -8,6 +9,9 @@ struct SessionView: View {
     let onClose: () -> Void
     @State private var showKeyboard = false
     @State private var isToolbarCollapsed = false
+    @State private var autoCollapseArmed = true
+    @State private var zoomState = ZoomState()
+    @State private var lifecycle = SessionLifecycle()
     @Environment(\.scenePhase) private var scenePhase
 
     private var isShowingScreen: Bool { session.state == .connected && session.frame != nil }
@@ -17,19 +21,20 @@ struct SessionView: View {
             Color.black.ignoresSafeArea()
             if let frame = session.frame {
                 RemoteScreenView(frame: frame, screenSize: session.screenSize,
-                                 lastAction: session.lastAction) { gesture, transform in
+                                 lastAction: session.lastAction, onGesture: { gesture, transform in
+                    settings.hasSeenGestureTips = true
                     session.perform(gesture, transform: transform)
-                }
-                .ignoresSafeArea()
+                }, zoomState: $zoomState)
+                .ignoresSafeArea(.container)
             }
             if !session.state.isActive || session.frame == nil {
                 SessionStatusView(session: session, onClose: onClose)
             }
             VStack(spacing: 0) {
                 SessionToolbar(session: session, showKeyboard: $showKeyboard,
-                               isCollapsed: $isToolbarCollapsed, onClose: onClose)
+                               isCollapsed: $isToolbarCollapsed, zoomState: $zoomState, onClose: onClose)
                 Spacer()
-                if isShowingScreen, !settings.hasSeenGestureTips {
+                if isShowingScreen, !settings.hasSeenGestureTips, !showKeyboard {
                     GestureTipsView { settings.hasSeenGestureTips = true }
                 }
                 if showKeyboard, session.state == .connected {
@@ -50,11 +55,9 @@ struct SessionView: View {
                 .interactiveDismissDisabled()
         }
         .onAppear { session.connect() }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active, ReconnectPolicy.shouldReconnect(after: session.state, userDisconnected: false) {
-                session.retry()
-            }
-        }
+        .onChange(of: scenePhase) { _, phase in lifecycle.update(phase, session: session) }
+        .task(id: isShowingScreen && settings.hasSeenGestureTips) { await autoCollapseToolbar() }
+        .onChange(of: isToolbarCollapsed) { _, _ in autoCollapseArmed = false }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
     }
@@ -63,4 +66,15 @@ struct SessionView: View {
         Binding(get: { session.credentialRequest != nil },
                 set: { if !$0 { session.cancelCredential() } })
     }
+
+    /// Once the screen is up and the tips are gone, tuck the toolbar away after
+    /// a moment; the chevron brings it back. One-shot: as soon as the user
+    /// collapses or expands it themselves, the timer stands down.
+    private func autoCollapseToolbar() async {
+        guard isShowingScreen, settings.hasSeenGestureTips, !isToolbarCollapsed else { return }
+        try? await Task.sleep(for: .seconds(SessionView.autoCollapseDelay))
+        if !Task.isCancelled, autoCollapseArmed, !showKeyboard { isToolbarCollapsed = true }
+    }
+
+    static let autoCollapseDelay: TimeInterval = 6
 }

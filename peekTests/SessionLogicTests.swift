@@ -1,3 +1,4 @@
+import Foundation
 import CoreGraphics
 import Testing
 @testable import peek
@@ -5,10 +6,12 @@ import Testing
 struct ModifierLogicTests {
     @Test func toggleHoldsThenReleases() {
         var logic = ModifierLogic()
-        #expect(logic.toggle(.command) == [.keyDown(KeySym.metaLeft)])
+        #expect(logic.toggle(.command) == [.keyDown(KeySym.superLeft)])
         #expect(logic.held == [.command])
-        #expect(logic.toggle(.command) == [.keyUp(KeySym.metaLeft)])
+        #expect(logic.toggle(.command) == [.keyUp(KeySym.superLeft)])
         #expect(logic.held.isEmpty)
+        logic.keymap = .appleRemoteDesktop
+        #expect(logic.toggle(.command) == [.keyDown(KeySym.hyperLeft)])
     }
 
     @Test func wrapReleasesHeldModifiersAfterPress() {
@@ -16,7 +19,7 @@ struct ModifierLogicTests {
         _ = logic.toggle(.shift)
         _ = logic.toggle(.command)
         let events = logic.wrap(ModifierLogic.press(KeySym.tab))
-        #expect(events == [.keyDown(KeySym.tab), .keyUp(KeySym.tab), .keyUp(KeySym.metaLeft), .keyUp(KeySym.shiftLeft)])
+        #expect(events == [.keyDown(KeySym.tab), .keyUp(KeySym.tab), .keyUp(KeySym.superLeft), .keyUp(KeySym.shiftLeft)])
         #expect(logic.held.isEmpty)
         #expect(logic.wrap([.text("a")]) == [.text("a")])
     }
@@ -140,5 +143,14 @@ struct ReconnectPolicyTests {
         #expect(!ReconnectPolicy.shouldReconnect(after: .disconnected(nil), userDisconnected: false))
         #expect(!ReconnectPolicy.shouldReconnect(after: .connected, userDisconnected: false))
         #expect(!ReconnectPolicy.shouldReconnect(after: .disconnected(.connection("x")), userDisconnected: true))
+    }
+
+    @Test func refreshesAfterALongBackgroundStay() {
+        let now = Date()
+        let longAgo = now.addingTimeInterval(-60)
+        #expect(ReconnectPolicy.shouldRefresh(state: .connected, backgroundedAt: longAgo, now: now))
+        #expect(!ReconnectPolicy.shouldRefresh(state: .connected, backgroundedAt: now.addingTimeInterval(-5), now: now))
+        #expect(!ReconnectPolicy.shouldRefresh(state: .connected, backgroundedAt: nil, now: now))
+        #expect(!ReconnectPolicy.shouldRefresh(state: .disconnected(nil), backgroundedAt: longAgo, now: now))
     }
 }

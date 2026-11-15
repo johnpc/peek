@@ -8,6 +8,7 @@ Feature: Connecting
     When I tap the "Studio Mac" computer
     Then I should be asked for a password
     And the username field should contain "john"
+    And the password field should be focused
 
   Scenario: A wrong password can be retried
     Given the app is launched

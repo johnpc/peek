@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Add / edit a computer. Pure form; validation lives in `HostDraft`.
@@ -12,7 +13,7 @@ struct HostEditorView: View {
                 Section("Computer") {
                     TextField("Name", text: $draft.name)
                         .accessibilityIdentifier("Name")
-                    TextField("Hostname or IP address", text: $draft.hostname)
+                    TextField("Hostname or IP address (host:port)", text: $draft.hostname)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)

@@ -7,6 +7,10 @@ struct CredentialSheet: View {
     @State private var username: String
     @State private var password = ""
     @State private var remember = false
+    @State private var revealPassword = false
+    @FocusState private var focused: Field?
+
+    private enum Field { case username, password }
 
     init(session: VNCSession) {
         self.session = session
@@ -23,11 +27,21 @@ struct CredentialSheet: View {
                         TextField("Username", text: $username)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .focused($focused, equals: .username)
+                            .submitLabel(.next)
+                            .onSubmit { focused = .password }
                             .accessibilityIdentifier("Username")
                     }
-                    SecureField("Password", text: $password)
-                        .accessibilityIdentifier("Password")
-                        .onSubmit(submit)
+                    HStack {
+                        PasswordField(text: $password, revealed: revealPassword)
+                            .focused($focused, equals: .password)
+                            .submitLabel(.go)
+                            .onSubmit(submit)
+                        Button(revealPassword ? "Hide password" : "Show password",
+                               systemImage: revealPassword ? "eye.slash" : "eye") { revealPassword.toggle() }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                    }
                     Toggle("Remember password", isOn: $remember)
                 } footer: {
                     Text(needsUsername
@@ -46,11 +60,35 @@ struct CredentialSheet: View {
                         .disabled(password.isEmpty)
                 }
             }
+            .onAppear { focused = needsUsername && username.isEmpty ? .username : .password }
         }
     }
 
     private func submit() {
         guard !password.isEmpty else { return }
         session.submitCredential(username: username, password: password, remember: remember)
+    }
+}
+
+/// Secure by default, plain text when revealed; same identifier either way so
+/// tests and AutoFill see one field.
+struct PasswordField: View {
+    @Binding var text: String
+    let revealed: Bool
+
+    var body: some View {
+        Group {
+            if revealed {
+                TextField("Password", text: $text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            } else {
+                SecureField("Password", text: $text)
+            }
+        }
+        // Deliberately no `.textContentType(.password)`: this is a remote
+        // computer's login, and iOS's "Save Password?" sheet would pop over
+        // the form (peek keeps the password in its own keychain entry instead).
+        .accessibilityIdentifier("Password")
     }
 }

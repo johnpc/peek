@@ -1,4 +1,6 @@
 import CoreGraphics
+import Foundation
+import SwiftUI
 import Testing
 @testable import peek
 
@@ -77,11 +79,63 @@ struct VNCSessionTests {
         #expect(desktop()?.snapshot() == nil)
     }
 
+    @Test func appleRemoteDesktopServersSwitchTheModifierKeymap() {
+        let (session, _) = makeSession(savedPassword: "secret")
+        #expect(session.modifiers.keymap == .standard)
+        session.connect()
+        #expect(session.modifiers.keymap == .appleRemoteDesktop)
+        session.toggle(.command)
+        let (plain, _) = makeSession { $0.requiresCredential = false }
+        plain.connect()
+        #expect(plain.modifiers.keymap == .standard)
+    }
+
     @Test func noPasswordServersConnectDirectly() {
         let (session, _) = makeSession { $0.requiresCredential = false }
         session.connect()
         #expect(session.state == .connected)
         #expect(session.credentialRequest == nil)
+    }
+}
+
+struct SessionLifecycleTests {
+    private func connectedSession() -> (VNCSession, () -> Int) {
+        var connects = 0
+        let throttle = FrameThrottle(interval: 0) { _, work in work() }
+        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle) {
+            connects += 1
+            let desktop = MockDesktop()
+            desktop.requiresCredential = false
+            return desktop
+        }
+        session.connect()
+        return (session, { connects })
+    }
+
+    @Test func reconnectsAfterALongBackgroundStayOnly() {
+        let (session, connects) = connectedSession()
+        let lifecycle = SessionLifecycle()
+        var clock = Date(timeIntervalSince1970: 1_000)
+        lifecycle.now = { clock }
+        lifecycle.update(.background, session: session)
+        #expect(lifecycle.backgroundedAt == clock)
+        clock = clock.addingTimeInterval(5)
+        lifecycle.update(.active, session: session)
+        #expect(connects() == 1, "a short background stay keeps the connection")
+        lifecycle.update(.background, session: session)
+        clock = clock.addingTimeInterval(60)
+        lifecycle.update(.active, session: session)
+        #expect(connects() == 2, "a long background stay reconnects")
+        #expect(lifecycle.backgroundedAt == nil)
+        lifecycle.update(.inactive, session: session)
+        #expect(connects() == 2)
+    }
+
+    @Test func reconnectsAfterADroppedConnection() {
+        let (session, connects) = connectedSession()
+        session.desktop?.onEvent?(.state(.disconnected(.connection("dropped"))))
+        SessionLifecycle().update(.active, session: session)
+        #expect(connects() == 2)
     }
 }
 
@@ -126,7 +180,7 @@ struct VNCSessionInputTests {
         session.press(.tab)
         #expect(session.lastAction == "key tab")
         #expect(session.heldModifiers.isEmpty)
-        #expect(desktop.inputs.suffix(3) == [.keyDown(KeySym.tab), .keyUp(KeySym.tab), .keyUp(KeySym.metaLeft)])
+        #expect(desktop.inputs.suffix(3) == [.keyDown(KeySym.tab), .keyUp(KeySym.tab), .keyUp(KeySym.superLeft)])
         session.toggle(.shift)
         session.toggle(.shift)
         #expect(session.lastAction == "release ⇧")

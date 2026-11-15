@@ -6,6 +6,7 @@ struct SessionToolbar: View {
     @ObservedObject var session: VNCSession
     @Binding var showKeyboard: Bool
     @Binding var isCollapsed: Bool
+    @Binding var zoomState: ZoomState
     let onClose: () -> Void
 
     var body: some View {
@@ -25,6 +26,9 @@ struct SessionToolbar: View {
                         .accessibilityIdentifier("status")
                 }
                 Spacer()
+                if zoomState.isZoomed {
+                    Button("Fit to screen", systemImage: "arrow.down.right.and.arrow.up.left") { zoomState.reset() }
+                }
                 Button("Keyboard", systemImage: showKeyboard ? "keyboard.chevron.compact.down" : "keyboard") {
                     showKeyboard.toggle()
                 }

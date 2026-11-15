@@ -10,6 +10,8 @@ enum MockMode {
     static let savedPasswordArgument = "--uitest-saved-password"
     /// Start with no saved hosts (empty state).
     static let noHostsArgument = "--uitest-no-hosts"
+    /// Pretend iOS declined Local Network access.
+    static let noLocalNetworkArgument = "--uitest-no-local-network"
 
     static let fixtureHost = SavedHost(name: "Studio Mac", hostname: "studio.local", username: "john")
     static let fixturePassword = "secret"
@@ -36,7 +38,9 @@ enum MockMode {
         }
         return AppEnvironment(
             hosts: hosts,
-            discovery: DiscoveryStore(browser: MockBrowser(fixtures: [fixtureNearby])),
+            discovery: DiscoveryStore(browser: MockBrowser(
+                fixtures: [fixtureNearby],
+                status: args.contains(noLocalNetworkArgument) ? .localNetworkDenied : .searching)),
             settings: SettingsStore(defaults: defaults),
             makeDesktop: { _, _ in MockDesktop() }
         )

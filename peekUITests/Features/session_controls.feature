@@ -45,3 +45,11 @@ Feature: Controlling the remote screen
     Then the "Disconnect" button should not be visible
     When I tap "Show controls"
     Then I should see "Connected"
+
+  @saved-password
+  Scenario: The toolbar tucks itself away once the screen is up
+    Given I am connected to "Studio Mac"
+    And I dismiss the controls tip
+    Then the "Disconnect" button should not be visible
+    When I tap "Show controls"
+    Then I should see "Connected"

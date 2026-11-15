@@ -143,7 +143,9 @@ xcodebuild test -scheme peek -destination 'platform=iOS Simulator,name=iPhone 17
 ## Key facts
 
 - **Repo:** `johnpc/peek`. **Bundle id:** `com.johncorser.peek`. Team `JW5SC3NYUV`.
-  `ITSAppUsesNonExemptEncryption=NO`.
+  `ITSAppUsesNonExemptEncryption=NO`. **App Store Connect:** app record
+  "peek – Screen Sharing" (id 6834960831; the bare name "peek" is taken); internal
+  TestFlight group "Team" gets every build automatically.
 - **CI:** `.github/workflows/quality-gates.yml` on the self-hosted Mac mini
   runner (`actions-runner-peek`, label `mac-mini`): build → unit tests +
   coverage → CRAP → Gherkin acceptance; deploys to App Store Connect on push to
@@ -157,8 +159,10 @@ xcodebuild test -scheme peek -destination 'platform=iOS Simulator,name=iPhone 17
 - **RoyalVNCKit over a hand-rolled RFB client.** Apple Remote Desktop auth
   (DH + AES + MD5) and the encodings are fiddly and well-trodden there; our
   value is the iOS experience. Contained behind `RemoteDesktop` so it's swappable.
-- **⌘ is sent as X11 `Meta_L`, ⌥ as `Alt_L`** — what macOS Screen Sharing maps
-  them to. Revisit if a non-Apple server disagrees.
+- **Modifier keysyms depend on the server** (`ModifierKeymap`): Apple Remote
+  Desktop servers (detected because they ask for a username) get ⌘=`Hyper_L`,
+  ⌥=`Meta_L`; everything else gets ⌘=`Super_L`, ⌥=`Alt_L`. Verified on a real
+  Mac: `Meta_L` was NOT read as ⌘ (⌘L typed a literal "l").
 - **Discovery stores the resolved IPv4 address**, not the `.local` name:
   Network.framework has no standalone resolver, and connecting to the Bonjour
   endpoint yields an IP. Users can edit the hostname afterwards.

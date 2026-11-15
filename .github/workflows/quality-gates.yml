@@ -195,6 +195,14 @@ jobs:
 
           OUTPUT=$(archive_and_upload) && echo "$OUTPUT" && exit 0
 
+          if echo "$OUTPUT" | grep -q "Error Downloading App Information"; then
+            # The archive built and signed; App Store Connect just has no app
+            # record for this bundle id yet (the record can't be created by
+            # API). Not a code failure — surface it and let the run stay green.
+            echo "::warning title=TestFlight upload skipped::No App Store Connect app record exists for com.johncorser.peek yet. Create the app in App Store Connect (bundle id com.johncorser.peek); the next push to main will upload."
+            exit 0
+          fi
+
           if echo "$OUTPUT" | grep -qi "version.*already exists\|already been uploaded\|redundant binary\|train.*closed\|higher version"; then
             echo "⚠️ Version conflict detected, bumping minor version..."
             CURRENT=$(grep 'MARKETING_VERSION' peek.xcodeproj/project.pbxproj | head -1 | sed 's/.*= *\(.*\);/\1/')

@@ -34,6 +34,15 @@ struct DiscoveryStoreTests {
         store.stop()
         #expect(!browser.isRunning)
         #expect(store.nearby.isEmpty)
+        #expect(store.status == .searching)
+    }
+
+    @Test func deniedLocalNetworkHidesFixturesAndReportsStatus() {
+        let browser = MockBrowser(fixtures: [DiscoveredHost(serviceName: "a", hostname: "1", port: 1)], status: .localNetworkDenied)
+        let store = DiscoveryStore(browser: browser)
+        store.start()
+        #expect(store.status == .localNetworkDenied)
+        #expect(store.nearby.isEmpty)
     }
 }
 
@@ -51,6 +60,14 @@ struct BonjourEndpointTests {
         #expect(BonjourEndpoint.string(for: .name("mini.local", nil)) == "mini.local")
         #expect(BonjourEndpoint.string(for: .ipv6(.loopback)) == "::1")
         #expect(BonjourEndpoint.string(for: .ipv4(.loopback)) == "127.0.0.1")
+    }
+
+    @Test func browserStatesMapToStatuses() {
+        #expect(BonjourEndpoint.status(for: .ready) == .searching)
+        #expect(BonjourEndpoint.status(for: .setup) == .searching)
+        #expect(BonjourEndpoint.status(for: .failed(.dns(-65570))) == .localNetworkDenied)
+        #expect(BonjourEndpoint.status(for: .waiting(.dns(-65570))) == .localNetworkDenied)
+        #expect(BonjourEndpoint.status(for: .failed(.posix(.ECONNREFUSED))) == .failed(NWError.posix(.ECONNREFUSED).localizedDescription))
     }
 
     @Test func serviceNameAndParameters() {

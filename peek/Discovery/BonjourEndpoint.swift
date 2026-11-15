@@ -1,3 +1,4 @@
+import Foundation
 import Network
 
 /// Pure mapping from a resolved Network.framework endpoint to a host record.
@@ -28,6 +29,18 @@ enum BonjourEndpoint {
     static func serviceName(of endpoint: NWEndpoint) -> String? {
         guard case .service(let name, _, _, _) = endpoint else { return nil }
         return name
+    }
+
+    /// Browser state → user-facing status. A declined Local Network prompt
+    /// surfaces as a DNS policy error (-65570), not as a permission API.
+    static func status(for state: NWBrowser.State) -> DiscoveryStatus {
+        switch state {
+        case .failed(let error), .waiting(let error):
+            if case .dns(let code) = error, code == -65570 { return .localNetworkDenied }
+            return .failed(error.localizedDescription)
+        default:
+            return .searching
+        }
     }
 
     /// TCP pinned to IPv4 so the address we learn is a plain dotted quad.

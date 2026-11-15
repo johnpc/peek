@@ -17,8 +17,9 @@ enum KeySym {
     static let end: UInt32 = 0xff57
     static let shiftLeft: UInt32 = 0xffe1
     static let controlLeft: UInt32 = 0xffe3
-    /// macOS Screen Sharing reads Meta as ⌘ and Alt as ⌥.
     static let metaLeft: UInt32 = 0xffe7
     static let altLeft: UInt32 = 0xffe9
+    static let superLeft: UInt32 = 0xffeb
+    static let hyperLeft: UInt32 = 0xffed
     static let delete: UInt32 = 0xffff
 }

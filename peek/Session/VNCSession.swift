@@ -11,7 +11,7 @@ final class VNCSession: ObservableObject, Identifiable {
     @Published private(set) var state: RemoteState = .idle
     @Published private(set) var frame: CGImage?
     @Published private(set) var screenSize: CGSize = .zero
-    @Published private(set) var credentialRequest: CredentialRequest?
+    @Published var credentialRequest: CredentialRequest?
     @Published var lastAction: String?
     @Published private(set) var heldModifiers: Set<Modifier> = []
 
@@ -23,7 +23,7 @@ final class VNCSession: ObservableObject, Identifiable {
     private(set) var desktop: RemoteDesktop?
     var modifiers = ModifierLogic() { didSet { heldModifiers = modifiers.held } }
     private var savedPassword: String?
-    private var pendingRemember: String?
+    var pendingRemember: String?
 
     init(host: SavedHost,
          savedPassword: String? = nil,
@@ -57,20 +57,6 @@ final class VNCSession: ObservableObject, Identifiable {
         desktop?.disconnect()
     }
 
-    func submitCredential(username: String, password: String, remember: Bool) {
-        credentialRequest = nil
-        pendingRemember = remember ? password : nil
-        desktop?.supply(RemoteCredential(username: username, password: password))
-    }
-
-    /// No-op once a credential has been submitted: SwiftUI re-fires the sheet's
-    /// binding on programmatic dismissal, which must not cancel a sign-in.
-    func cancelCredential() {
-        guard credentialRequest != nil else { return }
-        credentialRequest = nil
-        desktop?.supply(nil)
-    }
-
     private func handle(_ event: RemoteDesktopEvent) {
         switch event {
         case .state(let next):
@@ -80,6 +66,7 @@ final class VNCSession: ObservableObject, Identifiable {
                 onRememberPassword?(password)
             }
         case .credentialNeeded(let request):
+            if request.needsUsername { modifiers.keymap = .appleRemoteDesktop }
             if let password = savedPassword {
                 savedPassword = nil
                 desktop?.supply(RemoteCredential(username: host.username, password: password))
