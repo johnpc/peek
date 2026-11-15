@@ -15,64 +15,57 @@ env:
   DESTINATION: "platform=iOS Simulator,name=iPhone 17 Pro"
 
 jobs:
-  build:
-    name: Build
-    # Self-hosted Mac Mini. This workflow runs on pull_request too, and
+  gates:
+    name: Build · Unit Tests · Coverage · CRAP · Acceptance
+    # Self-hosted Mac mini. This workflow runs on pull_request too, and
     # self-hosted runners on a public repo are unsafe for fork PRs (arbitrary
     # code execution) — so only run for push-to-main or a PR authored by the
-    # repo owner. unit-tests/crap-analysis/acceptance-tests all `needs: build`
-    # (directly or transitively) so skipping this job skips them too.
+    # repo owner. One job on purpose: the runner executes jobs serially, so
+    # splitting them only added checkouts and DerivedData cache round-trips.
     if: github.event_name != 'pull_request' || github.event.pull_request.user.login == 'johnpc'
     runs-on: [self-hosted, mac-mini]
-    timeout-minutes: 15
+    timeout-minutes: 30
+    env:
+      # Persistent on the runner: incremental builds + cached package checkouts
+      # across runs (the workspace itself is re-checked-out every time).
+      DERIVED: ${{ github.workspace }}/../peek-derived
+      SPM: ${{ github.workspace }}/../peek-spm
     steps:
       - uses: actions/checkout@v5
 
       - name: Enforce 100-line limit on all source files
         run: bash scripts/check_file_lines.sh
 
+      - name: Verify generated acceptance tests match .feature files
+        run: python3 scripts/generate_acceptance_tests.py --check
+
       - name: Build for testing
         run: |
           xcodebuild build-for-testing \
             -scheme "$SCHEME" \
             -destination "$DESTINATION" \
-            -derivedDataPath DerivedData \
+            -derivedDataPath "$DERIVED" \
+            -clonedSourcePackagesDirPath "$SPM" \
             -quiet
 
-      - name: Cache DerivedData
-        uses: actions/cache/save@v5
-        with:
-          path: DerivedData
-          key: derived-data-${{ github.sha }}
-
-  unit-tests:
-    name: Unit Tests + Coverage
-    runs-on: [self-hosted, mac-mini]
-    timeout-minutes: 15
-    needs: build
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/cache/restore@v5
-        with:
-          path: DerivedData
-          key: derived-data-${{ github.sha }}
-
-      - name: Run unit tests
+      - name: Unit tests + coverage
         run: |
+          rm -rf TestResults.xcresult
           xcodebuild test-without-building \
             -scheme "$SCHEME" \
             -destination "$DESTINATION" \
-            -derivedDataPath DerivedData \
+            -derivedDataPath "$DERIVED" \
             -only-testing:"peekTests" \
             -enableCodeCoverage YES \
             -resultBundlePath TestResults.xcresult \
             -quiet
-
-      - name: Export coverage JSON
-        run: xcrun xccov view --report --json TestResults.xcresult > coverage.json
+          xcrun xccov view --report --json TestResults.xcresult > coverage.json
 
       - name: Enforce coverage >= 80%
         run: python3 scripts/coverage_check.py coverage.json
+
+      - name: CRAP scores (threshold 15)
+        run: python3 scripts/crap_check.py coverage.json
 
       - name: Upload coverage artifact
         if: always()
@@ -81,45 +74,16 @@ jobs:
           name: coverage
           path: coverage.json
 
-  crap-analysis:
-    name: CRAP Score Analysis
-    runs-on: [self-hosted, mac-mini]
-    timeout-minutes: 10
-    needs: unit-tests
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
-        with:
-          name: coverage
-      - name: Calculate CRAP scores (threshold 15)
-        run: python3 scripts/crap_check.py coverage.json
-
-  acceptance-tests:
-    name: Acceptance
-    runs-on: [self-hosted, mac-mini]
-    needs: build
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/cache/restore@v5
-        with:
-          path: DerivedData
-          key: derived-data-${{ github.sha }}
-      - name: Verify generated acceptance tests match .feature files
-        run: python3 scripts/generate_acceptance_tests.py --check
-      - name: Run all scenarios on parallel simulators
+      - name: Acceptance scenarios on parallel simulators
         run: |
-          # One job on the one Mac Mini: matrix shards would just queue behind
-          # each other. Instead Xcode clones the simulator and spreads the
-          # per-feature test classes across workers. Only a failing test is
-          # retried (a flake that passes on retry passes; a real failure fails
-          # every iteration and fails the job). Running the whole target means
-          # no scenario can be skipped by a stale filter.
+          # Xcode clones the simulator and spreads the per-feature test classes
+          # across workers. Only a failing test is retried (a flake that passes
+          # on retry passes; a real failure fails every iteration).
           rm -rf AcceptanceResults.xcresult
           xcodebuild test-without-building \
             -scheme "$SCHEME" \
             -destination "$DESTINATION" \
-            -derivedDataPath DerivedData \
+            -derivedDataPath "$DERIVED" \
             -only-testing:peekUITests \
             -parallel-testing-enabled YES \
             -parallel-testing-worker-count 4 \
@@ -127,17 +91,18 @@ jobs:
             -test-iterations 3 \
             -resultBundlePath AcceptanceResults.xcresult \
             -quiet
-      - name: Summarize failures
+
+      - name: Summarize acceptance failures
         if: failure()
         run: |
-          xcrun xcresulttool get test-results summary --path AcceptanceResults.xcresult \
-            | python3 -c "import json,sys; [print(f'❌ {f[\"testIdentifierString\"]}: {f[\"failureText\"]}') for f in json.load(sys.stdin).get('testFailures', [])]"
+          [ -d AcceptanceResults.xcresult ] && xcrun xcresulttool get test-results summary --path AcceptanceResults.xcresult \
+            | python3 -c "import json,sys; [print(f'❌ {f[\"testIdentifierString\"]}: {f[\"failureText\"]}') for f in json.load(sys.stdin).get('testFailures', [])]" || true
 
   deploy:
     name: Deploy to App Store Connect
     runs-on: [self-hosted, mac-mini]
     timeout-minutes: 60
-    needs: [unit-tests, crap-analysis, acceptance-tests]
+    needs: gates
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v5
@@ -179,6 +144,8 @@ jobs:
             xcodebuild archive \
               -scheme "$SCHEME" \
               -destination "generic/platform=iOS" \
+              -derivedDataPath "${{ github.workspace }}/../peek-derived" \
+              -clonedSourcePackagesDirPath "${{ github.workspace }}/../peek-spm" \
               -archivePath ~/Desktop/peek.xcarchive \
               CODE_SIGNING_ALLOWED=NO \
               -quiet
