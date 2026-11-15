@@ -158,6 +158,21 @@ xcodebuild test -scheme peek -destination 'platform=iOS Simulator,name=iPhone 17
 - **Testing against a real Mac:** the mini has Screen Sharing on (port 5900,
   legacy VNC password + Apple Remote Desktop auth both enabled). From the
   simulator on the mini, connect to `127.0.0.1`.
+- **Never create or delete macOS user accounts on the mini for tests.** Every
+  Screen Sharing sign-in as another account opens a fast-user-switch console
+  session, and deleting the account does NOT end that session. On 2026-11-15
+  seven throwaway `peektest` logins left an orphaned session owning the console;
+  after it was killed, the window server's display ID no longer resolved
+  (`ScreensharingAgent: display index not found`) and every client — peek AND
+  Apple's Screen Sharing — showed a black screen with only a cursor until the
+  window server was restarted. Real-Mac checks instead:
+  - Default: the logging RFB server (`python3 /tmp/rfbserver.py`, 127.0.0.1:5901)
+    for anything that doesn't need a real desktop — keys, clicks, clipboard.
+  - Real desktop: sign in as `john` with John present to approve it, never a
+    new account. If a second account is ever unavoidable, log it out first
+    (`sudo launchctl bootout gui/<uid>`), confirm with `who` and the
+    `IOConsoleUsers` list that only john is on the console, then delete it.
+  - John's uid on the mini is **501**.
 
 ## Decisions
 
