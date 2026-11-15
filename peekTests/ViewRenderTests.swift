@@ -103,6 +103,53 @@ final class ViewRenderTests: XCTestCase {
         XCTAssertNil(RemoteScreenScrollView(coder: NSCoder()))
     }
 
+    /// A two-finger pan is, to the scroll view, a content-offset change. Zoom
+    /// far in and visit each corner the way a pan would, checking what is
+    /// visible and where a tap in the middle of the viewport would land.
+    func testZoomedPanReachesEveryCornerAndKeepsClicksAccurate() {
+        guard let frame = MockFrame.render(size: CGSize(width: 1280, height: 800)) else { return XCTFail("no frame") }
+        let viewport = CGSize(width: 400, height: 250)
+        let scroll = RemoteScreenScrollView(frame: CGRect(origin: .zero, size: viewport))
+        // Real geometry needs a window: point conversion ignores a detached view's offset.
+        let window = UIWindow(frame: CGRect(origin: .zero, size: viewport))
+        window.addSubview(scroll)
+        window.makeKeyAndVisible()
+        scroll.display(frame, size: CGSize(width: 1280, height: 800))
+        scroll.layoutIfNeeded()
+        scroll.setZoomScale(scroll.maximumZoomScale, animated: false)
+        scroll.layoutIfNeeded()
+        let zoom = scroll.zoomScale
+        XCTAssertEqual(zoom, scroll.fitScale * RemoteScreenScrollView.maximumMagnification, accuracy: 0.001)
+        XCTAssertTrue(scroll.isZoomed)
+        XCTAssertEqual(scroll.contentInset, .zero, "a magnified screen fills the viewport, nothing to center")
+        let maxX = scroll.contentSize.width - viewport.width
+        let maxY = scroll.contentSize.height - viewport.height
+        XCTAssertGreaterThan(maxX, 0); XCTAssertGreaterThan(maxY, 0)
+
+        let corners: [(name: String, offset: CGPoint, pixel: CGPoint)] = [
+            ("top-left", CGPoint(x: 0, y: 0), CGPoint(x: viewport.width / 2 / zoom, y: viewport.height / 2 / zoom)),
+            ("top-right", CGPoint(x: maxX, y: 0), CGPoint(x: 1280 - viewport.width / 2 / zoom, y: viewport.height / 2 / zoom)),
+            ("bottom-left", CGPoint(x: 0, y: maxY), CGPoint(x: viewport.width / 2 / zoom, y: 800 - viewport.height / 2 / zoom)),
+            ("bottom-right", CGPoint(x: maxX, y: maxY), CGPoint(x: 1280 - viewport.width / 2 / zoom, y: 800 - viewport.height / 2 / zoom)),
+        ]
+        for corner in corners {
+            scroll.setContentOffset(corner.offset, animated: false)
+            scroll.layoutIfNeeded()
+            XCTAssertEqual(scroll.contentOffset, corner.offset, corner.name)
+            // A scroll view's coordinate space is content space (bounds origin = offset),
+            // so the middle of the viewport is offset + half the viewport.
+            let center = CGPoint(x: corner.offset.x + viewport.width / 2, y: corner.offset.y + viewport.height / 2)
+            let inContent = scroll.content.convert(center, from: scroll)
+            XCTAssertEqual(inContent.x, corner.pixel.x, accuracy: 1, "\(corner.name) x")
+            XCTAssertEqual(inContent.y, corner.pixel.y, accuracy: 1, "\(corner.name) y")
+            let visible = CGRect(origin: CGPoint(x: corner.offset.x / zoom, y: corner.offset.y / zoom),
+                                 size: CGSize(width: viewport.width / zoom, height: viewport.height / zoom))
+            XCTAssertTrue(CGRect(x: 0, y: 0, width: 1280, height: 800).contains(visible.insetBy(dx: 0.5, dy: 0.5)), corner.name)
+        }
+        scroll.fit()
+        XCTAssertFalse(scroll.isZoomed)
+    }
+
     func testKeyInputViewForwardsTyping() {
         var typed: [String] = []
         var backspaces = 0

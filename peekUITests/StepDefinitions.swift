@@ -101,6 +101,20 @@ enum StepDefinitions {
             XCTAssertEqual(status.label, w.capture())
         }
         r.define("I tap the remote screen") { w in remoteScreen(w).tap() }
+        r.define("I pinch to zoom in on the remote screen") { w in
+            remoteScreen(w).pinch(withScale: 3, velocity: 2)
+        }
+        r.define("the \"(.+)\" button should be visible") { w in
+            XCTAssertTrue(w.app.buttons[w.capture()].waitForExistence(timeout: short))
+        }
+        r.define("the last input should be a left click near the middle of the screen") { w in
+            XCTAssertTrue(waitUntil {
+                guard let value = remoteScreen(w).value as? String, value.hasPrefix("click left at ") else { return false }
+                let parts = value.dropFirst("click left at ".count).split(separator: ",").compactMap { Int($0) }
+                // Mock screen is 1280×800; the pinch is centered, so the center must still map to the center.
+                return parts.count == 2 && abs(parts[0] - 640) < 80 && abs(parts[1] - 400) < 80
+            }, "remote screen value was \(String(describing: remoteScreen(w).value))")
+        }
         r.define("I dismiss the controls tip") { w in tap(w.app.buttons["Got it"]) }
         r.define("the controls tip should be gone") { w in
             XCTAssertTrue(waitUntilGone(w.app.buttons["Got it"]))

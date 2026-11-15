@@ -120,3 +120,13 @@ final class SettingsFeatureTests: AcceptanceTests {
     }
 
 }
+
+
+/// Zooming the remote screen
+final class ZoomFeatureTests: AcceptanceTests {
+
+    func test_Pinching_zooms_in__clicks_stay_accurate__and_Fit_zooms_back_out() {
+        runScenario(feature: "zoom.feature", scenario: "Pinching zooms in, clicks stay accurate, and Fit zooms back out")
+    }
+
+}
