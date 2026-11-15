@@ -47,6 +47,8 @@ enum MockMode {
             settings: SettingsStore(defaults: defaults),
             resolver: MockResolver(answers: [fixtureNearby.serviceName: fixtureNearby.hostname]),
             pasteboard: MockPasteboard(string: args.contains(pasteboardArgument) ? fixturePasteboardText : nil),
+            thumbnails: ThumbnailStore(directory: FileManager.default.temporaryDirectory
+                .appendingPathComponent("peek-uitest-thumbs-\(UUID().uuidString)", isDirectory: true)),
             makeDesktop: { _, _ in MockDesktop() }
         )
     }

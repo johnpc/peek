@@ -98,6 +98,18 @@ struct RemoteInputTests {
         #expect(RemoteKey.tab.keysym == KeySym.tab)
     }
 
+    @Test func functionKeysAndMacActions() {
+        #expect(KeySym.function(1) == 0xffbe)
+        #expect(KeySym.function(12) == 0xffc9)
+        #expect(KeySym.function(99) == 0xffc9, "clamped")
+        #expect(KeyChord.functionKeys.count == 12)
+        #expect(KeyChord.functionKeys.first?.label == "F1")
+        #expect(KeyChord.functionKeys.last?.keysym == KeySym.function(12))
+        #expect(KeyChord.macActions.map(\.label).contains("Lock Screen"))
+        #expect(KeyChord.macActions.first { $0.label == "Spotlight" }?.modifiers == [.command])
+        #expect(Set(KeyChord.macActions.map(\.id)).count == KeyChord.macActions.count, "labels are unique ids")
+    }
+
     @Test func summaries() {
         #expect(RemoteInput.move(x: 1, y: 2).summary == "move to 1,2")
         #expect(RemoteInput.buttonDown(.left, x: 1, y: 2).summary == "left down at 1,2")

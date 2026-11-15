@@ -31,8 +31,11 @@ final class ViewRenderTests: XCTestCase {
         let env = environment()
         env.discovery.start()
         let model = HostListModel(environment: env)
-        render(NavigationStack { HostListView(hosts: env.hosts, discovery: env.discovery, model: model) })
+        render(NavigationStack { HostListView(hosts: env.hosts, discovery: env.discovery, thumbnails: env.thumbnails, model: model) })
         render(HostRow(host: SavedHost(name: "A", hostname: "a", rememberPassword: true)))
+        if let frame = MockFrame.render(size: CGSize(width: 200, height: 100)) {
+            render(HostRow(host: SavedHost(name: "A", hostname: "a"), thumbnail: UIImage(cgImage: frame)))
+        }
         render(EmptyHostsView())
         render(List { NearbySection(nearby: [MockMode.fixtureNearby]) { _ in } })
         render(List { NearbyStatusRow(status: .searching) })

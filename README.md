@@ -20,14 +20,14 @@ is what it was built for.
 | | Status |
 |---|---|
 | Nearby Macs appear automatically (Bonjour `_rfb._tcp`) | ✅ |
-| Save computers by name/address/port (or `host:port`); edit, delete | ✅ |
+| Save computers by name/address/port (or `host:port`); edit, delete; each shows a thumbnail of its last screen | ✅ |
 | Apple Remote Desktop sign-in (Mac account + password) and classic VNC passwords | ✅ |
 | Remember passwords in the iOS keychain | ✅ |
 | Live remote screen in a native zoom view: pinch around your fingers, two-finger pan while zoomed, two (or three) fingers scroll the Mac | ✅ |
 | Tap = click, double tap, two-finger tap = right click, long-press-and-drag, two-finger scroll | ✅ |
 | Three-finger flicks = macOS gestures (switch Spaces, Mission Control, App Exposé) | ✅ |
 | The Mac's own pointer is drawn; optional touchpad mode (drag moves the pointer, tap clicks there) | ✅ |
-| On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
+| On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧, esc / tab / return / delete / arrows, an F1–F12 page, and a Mac menu (Spotlight, Switch App, Lock Screen, Screenshot, …) | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings; plain-language connection errors | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |
 | Survives quick app switches; auto-reconnects (with your saved password) after longer ones, keeping the last screen up | ✅ |

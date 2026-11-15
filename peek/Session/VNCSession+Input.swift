@@ -33,6 +33,17 @@ extension VNCSession {
         send(inputs, action: ordered.map(\.symbol).joined() + text)
     }
 
+    /// Keyboard-bar chord: hold its modifiers, press its key, release — then
+    /// release any sticky modifiers the user had queued.
+    func send(_ chord: KeyChord) {
+        let keymap = modifiers.keymap
+        let ordered = Modifier.allCases.filter { chord.modifiers.contains($0) }
+        let downs = ordered.map { RemoteInput.keyDown(keymap.keysym(for: $0)) }
+        let ups = ordered.reversed().map { RemoteInput.keyUp(keymap.keysym(for: $0)) }
+        let inputs = modifiers.wrap(downs + ModifierLogic.press(chord.keysym) + ups)
+        send(inputs, action: ordered.isEmpty ? "key \(chord.label)" : chord.label)
+    }
+
     func toggle(_ modifier: Modifier) {
         let inputs = modifiers.toggle(modifier)
         let verb = modifiers.held.contains(modifier) ? "hold" : "release"

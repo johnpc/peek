@@ -138,11 +138,18 @@ struct HostListModelTests {
         model.connect(env.hosts.hosts[0])
         #expect(model.session?.host.name == "Studio Mac")
         model.session?.connect()
+        model.session?.submitCredential(username: "john", password: "secret", remember: false)
+        model.session?.refreshFrame()  // the live throttle flushes asynchronously
+        #expect(model.session?.frame != nil)
         model.closeSession()
         #expect(model.session == nil)
+        #expect(env.thumbnails.image(for: env.hosts.hosts[0].id) != nil, "hanging up keeps a thumbnail")
 
+        let studioId = env.hosts.hosts[0].id
         model.delete(env.hosts.hosts[1])
         #expect(env.hosts.hosts.map(\.name) == ["Studio Mac"])
+        model.delete(env.hosts.hosts[0])
+        #expect(env.thumbnails.image(for: studioId) == nil, "deleting a host drops its thumbnail")
         #expect(model.nearby([MockMode.fixtureNearby], saved: env.hosts.hosts) == [MockMode.fixtureNearby])
     }
 }

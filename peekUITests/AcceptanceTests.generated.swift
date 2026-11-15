@@ -111,6 +111,10 @@ final class SessionControlsFeatureTests: AcceptanceTests {
         runScenario(feature: "session_controls.feature", scenario: "The keyboard bar sends special keys")
     }
 
+    func test_The_function_key_page_sends_F_keys() {
+        runScenario(feature: "session_controls.feature", scenario: "The function-key page sends F-keys")
+    }
+
     func test_Modifiers_stay_held_until_the_next_key() {
         runScenario(feature: "session_controls.feature", scenario: "Modifiers stay held until the next key")
     }

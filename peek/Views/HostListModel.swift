@@ -36,13 +36,18 @@ final class HostListModel: ObservableObject {
 
     func delete(_ host: SavedHost) {
         environment.hosts.remove(host)
+        environment.thumbnails.remove(for: host.id)
     }
 
     func connect(_ host: SavedHost) {
         session = environment.makeSession(for: host)
     }
 
+    /// Hanging up also keeps the last frame as the host's thumbnail.
     func closeSession() {
+        if let session, let frame = session.frame {
+            environment.thumbnails.save(frame, for: session.host.id)
+        }
         session?.disconnect()
         session = nil
     }

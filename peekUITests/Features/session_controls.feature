@@ -26,6 +26,15 @@ Feature: Controlling the remote screen
     Then the last input should be "key esc"
 
   @saved-password
+  Scenario: The function-key page sends F-keys
+    Given I am connected to "Studio Mac"
+    And I dismiss the controls tip
+    When I tap "Keyboard"
+    And I tap the "page" key
+    And I tap the "F5" key
+    Then the last input should be "key F5"
+
+  @saved-password
   Scenario: Modifiers stay held until the next key
     Given I am connected to "Studio Mac"
     And I dismiss the controls tip

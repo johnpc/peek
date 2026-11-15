@@ -11,7 +11,8 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            HostListView(hosts: environment.hosts, discovery: environment.discovery, model: model)
+            HostListView(hosts: environment.hosts, discovery: environment.discovery,
+                         thumbnails: environment.thumbnails, model: model)
         }
         .sheet(item: $model.draft) { draft in
             HostEditorView(draft: draft, onSave: model.save) { model.draft = nil }

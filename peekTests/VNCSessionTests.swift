@@ -291,6 +291,21 @@ struct VNCSessionInputTests {
         #expect(session.lastAction == "text hi")
     }
 
+    @Test func keyChordsSendModifiersAroundTheKey() {
+        let (session, desktop) = connected()
+        session.send(KeyChord.functionKeys[4])
+        #expect(session.lastAction == "key F5")
+        #expect(desktop.inputs.suffix(2) == [.keyDown(KeySym.function(5)), .keyUp(KeySym.function(5))])
+        let lock = KeyChord.macActions.first { $0.label == "Lock Screen" }!
+        session.send(lock)
+        #expect(session.lastAction == "Lock Screen")
+        #expect(desktop.inputs.suffix(6) == [
+            .keyDown(KeySym.superLeft), .keyDown(KeySym.controlLeft),
+            .keyDown(lock.keysym), .keyUp(lock.keysym),
+            .keyUp(KeySym.controlLeft), .keyUp(KeySym.superLeft),
+        ])
+    }
+
     @Test func hardwareChordsHoldModifiersAroundText() {
         let (session, desktop) = connected()
         session.chord([.command, .shift], text: "z")

@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Testing
 @testable import peek
 
@@ -80,6 +81,33 @@ struct HostStoreTests {
         defaults.set(Data("nope".utf8), forKey: "peek.hosts")
         let store = HostStore(defaults: defaults, keychain: InMemoryKeychain())
         #expect(store.hosts.isEmpty)
+    }
+}
+
+struct ThumbnailStoreTests {
+    private func makeStore() -> (ThumbnailStore, URL) {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("thumbs-\(UUID().uuidString)")
+        return (ThumbnailStore(directory: dir), dir)
+    }
+
+    @Test func savesDownscaledAndReloads() throws {
+        let (store, dir) = makeStore()
+        let id = UUID()
+        let frame = try #require(MockFrame.render(size: CGSize(width: 1280, height: 800)))
+        #expect(store.image(for: id) == nil)
+        store.save(frame, for: id)
+        let saved = try #require(store.image(for: id))
+        #expect(saved.size == CGSize(width: 320, height: 200))
+        let reloaded = ThumbnailStore(directory: dir)
+        #expect(reloaded.image(for: id)?.size == CGSize(width: 320, height: 200))
+        store.remove(for: id)
+        #expect(store.image(for: id) == nil)
+        #expect(ThumbnailStore(directory: dir).image(for: id) == nil)
+    }
+
+    @Test func smallFramesAreNotUpscaled() throws {
+        let frame = try #require(MockFrame.render(size: CGSize(width: 100, height: 50)))
+        #expect(ThumbnailStore.thumbnail(from: frame, fitting: ThumbnailStore.size).size == CGSize(width: 100, height: 50))
     }
 }
 

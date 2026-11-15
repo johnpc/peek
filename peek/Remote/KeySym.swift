@@ -22,4 +22,10 @@ enum KeySym {
     static let superLeft: UInt32 = 0xffeb
     static let hyperLeft: UInt32 = 0xffed
     static let delete: UInt32 = 0xffff
+    static let f1: UInt32 = 0xffbe
+
+    /// F1…F12 are consecutive keysyms starting at `f1`.
+    static func function(_ number: Int) -> UInt32 {
+        f1 + UInt32(max(1, min(12, number)) - 1)
+    }
 }

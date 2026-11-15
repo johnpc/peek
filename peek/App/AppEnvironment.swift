@@ -9,18 +9,21 @@ final class AppEnvironment {
     let makeDesktop: RemoteDesktopFactory
     let resolver: HostResolver
     let pasteboard: Pasteboard
+    let thumbnails: ThumbnailStore
 
     init(hosts: HostStore,
          discovery: DiscoveryStore,
          settings: SettingsStore,
          resolver: HostResolver,
          pasteboard: Pasteboard = SystemPasteboard(),
+         thumbnails: ThumbnailStore = ThumbnailStore(),
          makeDesktop: @escaping RemoteDesktopFactory) {
         self.hosts = hosts
         self.discovery = discovery
         self.settings = settings
         self.resolver = resolver
         self.pasteboard = pasteboard
+        self.thumbnails = thumbnails
         self.makeDesktop = makeDesktop
     }
 

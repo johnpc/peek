@@ -1,14 +1,25 @@
 import SwiftUI
+import UIKit
 
 struct HostRow: View {
     let host: SavedHost
+    var thumbnail: UIImage? = nil
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "desktopcomputer")
-                .font(.title2)
-                .foregroundStyle(.tint)
-                .frame(width: 32)
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 64, height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .accessibilityLabel("Last screen of \(host.displayName)")
+            } else {
+                Image(systemName: "desktopcomputer")
+                    .font(.title2)
+                    .foregroundStyle(.tint)
+                    .frame(width: 64)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.displayName)
                     .font(.headline)

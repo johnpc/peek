@@ -4,6 +4,7 @@ import SwiftUI
 struct HostListView: View {
     @ObservedObject var hosts: HostStore
     @ObservedObject var discovery: DiscoveryStore
+    @ObservedObject var thumbnails: ThumbnailStore
     @ObservedObject var model: HostListModel
 
     var body: some View {
@@ -14,7 +15,9 @@ struct HostListView: View {
             } else {
                 Section("Saved") {
                     ForEach(hosts.hosts) { host in
-                        Button { model.connect(host) } label: { HostRow(host: host) }
+                        Button { model.connect(host) } label: {
+                            HostRow(host: host, thumbnail: thumbnails.image(for: host.id))
+                        }
                             .accessibilityIdentifier("host-\(host.displayName)")
                             .swipeActions {
                                 Button("Delete", role: .destructive) { model.delete(host) }

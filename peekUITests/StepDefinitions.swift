@@ -145,7 +145,26 @@ enum StepDefinitions {
             XCTAssertTrue(waitUntil { (remoteScreen(w).value as? String) == expected },
                           "remote screen value was \(String(describing: remoteScreen(w).value))")
         }
-        r.define("I tap the \"(.+)\" key") { w in tap(w.app.buttons["key-\(w.capture())"]) }
+        r.define("I tap the \"(.+)\" key") { w in
+            let key = w.app.buttons["key-\(w.capture())"]
+            XCTAssertTrue(key.waitForExistence(timeout: medium), "key should exist")
+            // The bar scrolls horizontally; bring far keys into view first
+            // (hittability can't even be evaluated for an off-screen button).
+            let screen = w.app.frame  // not windows.firstMatch: that can be the keyboard's window
+            let bar = w.app.scrollViews["keyboardBar"]
+            for _ in 0..<5 where !screen.contains(key.frame) {
+                XCTAssertTrue(bar.exists, "the key bar should be on screen")
+                // The bar's reported frame extends under the system keyboard, so
+                // drag along the keys' own row rather than the frame's middle.
+                let row = (key.frame.midY - bar.frame.minY) / max(1, bar.frame.height)
+                let offLeft = key.frame.minX < screen.minX
+                let from = CGVector(dx: offLeft ? 0.1 : 0.9, dy: row), to = CGVector(dx: offLeft ? 0.9 : 0.1, dy: row)
+                bar.coordinate(withNormalizedOffset: from)
+                    .press(forDuration: 0.05, thenDragTo: bar.coordinate(withNormalizedOffset: to),
+                           withVelocity: .slow, thenHoldForDuration: 0.1)
+            }
+            tap(key)
+        }
         r.define("the \"(.+)\" modifier should be (held|released)") { w in
             let key = w.app.buttons["key-\(w.capture(0))"]
             let expected = w.capture(1)

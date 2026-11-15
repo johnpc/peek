@@ -1,36 +1,70 @@
 import SwiftUI
 
-/// Modifier and special keys the phone keyboard lacks. Modifiers are sticky
-/// (see `ModifierLogic`); a held one is highlighted.
+/// Keys the phone keyboard lacks. Page one: sticky ⌘⌥⌃⇧, Paste, esc/tab/
+/// return/delete/arrows. Page two: F1–F12. A "Mac" menu holds common actions.
 struct KeyboardBar: View {
     @ObservedObject var session: VNCSession
+    @State private var showFunctionKeys = false
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Modifier.allCases, id: \.self) { modifier in
-                    let held = session.heldModifiers.contains(modifier)
-                    Button(modifier.symbol) { session.toggle(modifier) }
-                        .buttonStyle(KeyButtonStyle(highlighted: held))
-                        .accessibilityIdentifier("key-\(modifier.symbol)")
-                        .accessibilityValue(held ? "held" : "released")
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Color.clear.frame(width: 1).id("start")
+                    if showFunctionKeys {
+                    ForEach(KeyChord.functionKeys) { key in
+                        Button(key.label) { session.send(key) }
+                            .buttonStyle(KeyButtonStyle(highlighted: false))
+                            .accessibilityIdentifier("key-\(key.label)")
+                    }
+                } else {
+                    mainKeys
                 }
                 Divider().frame(height: 24)
-                Button("Paste", systemImage: "doc.on.clipboard") { session.pasteFromDevice() }
-                    .buttonStyle(KeyButtonStyle(highlighted: false))
-                    .labelStyle(.titleAndIcon)
-                    .accessibilityIdentifier("key-Paste")
-                Divider().frame(height: 24)
-                ForEach(RemoteKey.allCases, id: \.self) { key in
-                    Button(key.label) { session.press(key) }
-                        .buttonStyle(KeyButtonStyle(highlighted: false))
-                        .accessibilityIdentifier("key-\(key.label)")
+                Button(showFunctionKeys ? "ABC" : "F1–F12") {
+                    showFunctionKeys.toggle()
+                    // A new page starts at its first key, not wherever the old one was scrolled.
+                    withAnimation { proxy.scrollTo("start", anchor: .leading) }
                 }
+                    .buttonStyle(KeyButtonStyle(highlighted: showFunctionKeys))
+                    .accessibilityIdentifier("key-page")
+                Menu {
+                    ForEach(KeyChord.macActions) { action in
+                        Button(action.label) { session.send(action) }
+                    }
+                } label: {
+                    Label("Mac", systemImage: "apple.logo")
+                }
+                .buttonStyle(KeyButtonStyle(highlighted: false))
+                .accessibilityIdentifier("key-Mac")
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            .accessibilityIdentifier("keyboardBar")
         }
         .background(.ultraThinMaterial)
+    }
+
+    @ViewBuilder private var mainKeys: some View {
+        ForEach(Modifier.allCases, id: \.self) { modifier in
+            let held = session.heldModifiers.contains(modifier)
+            Button(modifier.symbol) { session.toggle(modifier) }
+                .buttonStyle(KeyButtonStyle(highlighted: held))
+                .accessibilityIdentifier("key-\(modifier.symbol)")
+                .accessibilityValue(held ? "held" : "released")
+        }
+        Divider().frame(height: 24)
+        ForEach(RemoteKey.allCases, id: \.self) { key in
+            Button(key.label) { session.press(key) }
+                .buttonStyle(KeyButtonStyle(highlighted: false))
+                .accessibilityIdentifier("key-\(key.label)")
+        }
+        Divider().frame(height: 24)
+        Button("Paste", systemImage: "doc.on.clipboard") { session.pasteFromDevice() }
+            .buttonStyle(KeyButtonStyle(highlighted: false))
+            .labelStyle(.titleAndIcon)
+            .accessibilityIdentifier("key-Paste")
     }
 }
 
