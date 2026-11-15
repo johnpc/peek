@@ -8,8 +8,8 @@ import Foundation
 final class VNCSession: ObservableObject, Identifiable {
     let host: SavedHost
 
-    @Published private(set) var state: RemoteState = .idle
-    @Published private(set) var frame: CGImage?
+    @Published var state: RemoteState = .idle
+    @Published var frame: CGImage?
     @Published private(set) var screenSize: CGSize = .zero
     @Published var credentialRequest: CredentialRequest?
     @Published var lastAction: String?
@@ -17,58 +17,48 @@ final class VNCSession: ObservableObject, Identifiable {
 
     /// Fired when the user asks to remember a password that just worked.
     var onRememberPassword: ((String) -> Void)?
+    /// Fired when a Nearby host resolved to a different address than saved.
+    var onAddressChanged: ((String) -> Void)?
 
-    private let makeDesktop: () -> RemoteDesktop
+    let makeDesktop: (SavedHost) -> RemoteDesktop
+    let resolver: HostResolver?
     private let throttle: FrameThrottle
-    private(set) var desktop: RemoteDesktop?
+    var desktop: RemoteDesktop?
     var modifiers = ModifierLogic() { didSet { heldModifiers = modifiers.held } }
-    private var savedPassword: String?
+    /// Known-good password for this host (from the keychain, or typed and
+    /// accepted earlier in this session). Reused on every reconnect; dropped
+    /// only when the server rejects it.
+    var savedPassword: String?
     var pendingRemember: String?
+    /// Last password typed into the sign-in sheet; promoted to `savedPassword`
+    /// once the server accepts it.
+    var submittedPassword: String?
+    /// Set once per connection attempt so a rejected saved password prompts
+    /// instead of looping.
+    var triedSavedPassword = false
 
     init(host: SavedHost,
          savedPassword: String? = nil,
          throttle: FrameThrottle = FrameThrottle(),
-         makeDesktop: @escaping () -> RemoteDesktop) {
+         resolver: HostResolver? = nil,
+         makeDesktop: @escaping (SavedHost) -> RemoteDesktop) {
         self.host = host
         self.savedPassword = savedPassword
         self.throttle = throttle
+        self.resolver = resolver
         self.makeDesktop = makeDesktop
         throttle.onFlush = { [weak self] in self?.refreshFrame() }
     }
 
-    func connect() {
-        let desktop = makeDesktop()
-        desktop.onEvent = { [weak self] event in self?.handle(event) }
-        self.desktop = desktop
-        frame = nil
-        credentialRequest = nil
-        state = .connecting
-        desktop.connect()
-    }
-
-    /// Reconnect from a failure. After a rejected password the saved one is
-    /// dropped so the user is asked again instead of looping.
-    func retry() {
-        if state.failure?.isAuthentication == true { savedPassword = nil }
-        connect()
-    }
-
-    func disconnect() {
-        desktop?.disconnect()
-    }
-
-    private func handle(_ event: RemoteDesktopEvent) {
+    func handle(_ event: RemoteDesktopEvent) {
         switch event {
         case .state(let next):
             state = next
-            if next == .connected, let password = pendingRemember {
-                pendingRemember = nil
-                onRememberPassword?(password)
-            }
+            if next == .connected { didConnect() }
         case .credentialNeeded(let request):
             if request.needsUsername { modifiers.keymap = .appleRemoteDesktop }
-            if let password = savedPassword {
-                savedPassword = nil
+            if let password = savedPassword, !triedSavedPassword {
+                triedSavedPassword = true
                 desktop?.supply(RemoteCredential(username: host.username, password: password))
             } else {
                 credentialRequest = request
@@ -78,6 +68,17 @@ final class VNCSession: ObservableObject, Identifiable {
             throttle.markDirty()
         case .framebufferUpdated:
             throttle.markDirty()
+        }
+    }
+
+    private func didConnect() {
+        if let password = submittedPassword {
+            savedPassword = password
+            submittedPassword = nil
+        }
+        if let password = pendingRemember {
+            pendingRemember = nil
+            onRememberPassword?(password)
         }
     }
 

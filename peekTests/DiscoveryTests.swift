@@ -82,6 +82,21 @@ struct BonjourEndpointTests {
     }
 }
 
+struct HostResolverTests {
+    @Test func mockResolverRecordsRequests() async {
+        let resolver = MockResolver(answers: ["a": "1.2.3.4"])
+        #expect(await resolver.resolve(serviceName: "a") == "1.2.3.4")
+        #expect(await resolver.resolve(serviceName: "b") == nil)
+        #expect(resolver.requests == ["a", "b"])
+    }
+
+    @Test func bonjourResolverGivesUpOnAnUnknownService() async {
+        let resolver = BonjourResolver(timeout: 1.5)
+        let address = await resolver.resolve(serviceName: "peek-no-such-service-\(UUID().uuidString)")
+        #expect(address == nil)
+    }
+}
+
 struct BonjourBrowserTests {
     @Test func updateTracksServicesAndResolution() {
         let browser = BonjourBrowser()

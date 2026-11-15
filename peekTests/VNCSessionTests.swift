@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import SwiftUI
+import UIKit
 import Testing
 @testable import peek
 
@@ -11,7 +12,7 @@ struct VNCSessionTests {
         -> (VNCSession, () -> MockDesktop?) {
         var current: MockDesktop?
         let throttle = FrameThrottle(interval: 0) { _, work in work() }
-        let session = VNCSession(host: host, savedPassword: savedPassword, throttle: throttle) {
+        let session = VNCSession(host: host, savedPassword: savedPassword, throttle: throttle) { _ in
             let desktop = MockDesktop()
             configure(desktop)
             current = desktop
@@ -49,6 +50,29 @@ struct VNCSessionTests {
         session.retry()
         #expect(session.state == .connecting)
         #expect(session.credentialRequest != nil, "the rejected saved password must not be reused")
+    }
+
+    @Test func savedPasswordIsReusedOnReconnect() {
+        let (session, desktop) = makeSession(savedPassword: "secret")
+        session.connect()
+        #expect(session.state == .connected)
+        desktop()?.onEvent?(.state(.disconnected(.connection("dropped"))))
+        session.retry()
+        #expect(session.credentialRequest == nil, "a dropped connection must not ask for the password again")
+        #expect(session.state == .connected)
+    }
+
+    @Test func typedPasswordIsReusedOnReconnectEvenWithoutRemember() {
+        let (session, desktop) = makeSession()
+        session.connect()
+        session.submitCredential(username: "john", password: "secret", remember: false)
+        #expect(session.state == .connected)
+        #expect(session.frame != nil)
+        desktop()?.onEvent?(.state(.disconnected(.connection("dropped"))))
+        session.retry()
+        #expect(session.frame != nil, "the last frame stays up while reconnecting")
+        #expect(session.credentialRequest == nil)
+        #expect(session.state == .connected)
     }
 
     @Test func rememberIsHonoredOnlyAfterSuccess() {
@@ -102,7 +126,7 @@ struct SessionLifecycleTests {
     private func connectedSession() -> (VNCSession, () -> Int) {
         var connects = 0
         let throttle = FrameThrottle(interval: 0) { _, work in work() }
-        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle) {
+        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle) { _ in
             connects += 1
             let desktop = MockDesktop()
             desktop.requiresCredential = false
@@ -114,7 +138,7 @@ struct SessionLifecycleTests {
 
     @Test func reconnectsAfterALongBackgroundStayOnly() {
         let (session, connects) = connectedSession()
-        let lifecycle = SessionLifecycle()
+        let lifecycle = SessionLifecycle(beginHold: { _ in .invalid }, endHold: { _ in })
         var clock = Date(timeIntervalSince1970: 1_000)
         lifecycle.now = { clock }
         lifecycle.update(.background, session: session)
@@ -131,11 +155,87 @@ struct SessionLifecycleTests {
         #expect(connects() == 2)
     }
 
+    @Test func holdsABackgroundTaskUntilActiveAgain() {
+        let (session, _) = connectedSession()
+        var began = 0, ended: [UIBackgroundTaskIdentifier] = []
+        let lifecycle = SessionLifecycle(
+            beginHold: { _ in began += 1; return UIBackgroundTaskIdentifier(rawValue: 42) },
+            endHold: { ended.append($0) })
+        lifecycle.update(.background, session: session)
+        lifecycle.update(.background, session: session)
+        #expect(began == 1, "one hold per background stay")
+        #expect(lifecycle.hold.rawValue == 42)
+        lifecycle.update(.active, session: session)
+        #expect(ended == [UIBackgroundTaskIdentifier(rawValue: 42)])
+        #expect(lifecycle.hold == .invalid)
+    }
+
+    @Test func expiredHoldIsReleasedOnce() {
+        let (session, _) = connectedSession()
+        var expiry: (() -> Void)?
+        var ended = 0
+        let lifecycle = SessionLifecycle(
+            beginHold: { handler in expiry = handler; return UIBackgroundTaskIdentifier(rawValue: 7) },
+            endHold: { _ in ended += 1 })
+        lifecycle.update(.background, session: session)
+        expiry?()
+        lifecycle.update(.active, session: session)
+        #expect(ended == 1)
+    }
+
     @Test func reconnectsAfterADroppedConnection() {
         let (session, connects) = connectedSession()
         session.desktop?.onEvent?(.state(.disconnected(.connection("dropped"))))
-        SessionLifecycle().update(.active, session: session)
+        SessionLifecycle(beginHold: { _ in .invalid }, endHold: { _ in }).update(.active, session: session)
         #expect(connects() == 2)
+    }
+}
+
+struct VNCSessionResolveTests {
+    private let nearby = SavedHost(name: "Mini", hostname: "10.0.0.5", serviceName: "John's Mac mini")
+
+    private func run(resolver: MockResolver) async -> (VNCSession, [String], [String]) {
+        var dialed: [String] = []
+        var changes: [String] = []
+        let throttle = FrameThrottle(interval: 0) { _, work in work() }
+        let session = VNCSession(host: nearby, throttle: throttle, resolver: resolver) { target in
+            dialed.append(target.hostname)
+            let desktop = MockDesktop()
+            desktop.requiresCredential = false
+            return desktop
+        }
+        session.onAddressChanged = { changes.append($0) }
+        session.connect()
+        #expect(session.state == .connecting)
+        for _ in 0..<50 where session.state != .connected { try? await Task.sleep(for: .milliseconds(10)) }
+        return (session, dialed, changes)
+    }
+
+    @Test func dialsTheFreshlyResolvedAddressAndReportsIt() async {
+        let resolver = MockResolver(answers: ["John's Mac mini": "10.0.0.9"])
+        let (session, dialed, changes) = await run(resolver: resolver)
+        #expect(session.state == .connected)
+        #expect(dialed == ["10.0.0.9"])
+        #expect(changes == ["10.0.0.9"])
+        #expect(resolver.requests == ["John's Mac mini"])
+    }
+
+    @Test func fallsBackToTheSavedAddressWhenResolutionFails() async {
+        let (session, dialed, changes) = await run(resolver: MockResolver())
+        #expect(session.state == .connected)
+        #expect(dialed == ["10.0.0.5"])
+        #expect(changes.isEmpty)
+    }
+
+    @Test func plainHostsSkipResolution() {
+        let resolver = MockResolver(answers: ["x": "y"])
+        let throttle = FrameThrottle(interval: 0) { _, work in work() }
+        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle, resolver: resolver) { _ in
+            let desktop = MockDesktop(); desktop.requiresCredential = false; return desktop
+        }
+        session.connect()
+        #expect(session.state == .connected)
+        #expect(resolver.requests.isEmpty)
     }
 }
 
@@ -144,7 +244,7 @@ struct VNCSessionInputTests {
         let desktop = MockDesktop()
         desktop.requiresCredential = false
         let throttle = FrameThrottle(interval: 0) { _, work in work() }
-        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle) { desktop }
+        let session = VNCSession(host: SavedHost(name: "S", hostname: "s"), throttle: throttle) { _ in desktop }
         session.connect()
         return (session, desktop)
     }

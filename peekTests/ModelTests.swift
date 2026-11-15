@@ -13,6 +13,20 @@ struct SavedHostTests {
         #expect(SavedHost(name: "Studio", hostname: "mac.local").displayName == "Studio")
     }
 
+    @Test func subtitleFlagsNearbyHosts() {
+        #expect(SavedHost(name: "A", hostname: "mac.local").subtitle == "mac.local")
+        #expect(SavedHost(name: "A", hostname: "fe80::1%en0", serviceName: "Mini").subtitle == "Nearby · fe80::1%en0")
+    }
+
+    @Test func decodesRecordsSavedBeforeServiceNameExisted() throws {
+        let legacy = Data("""
+        {"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","name":"A","hostname":"a.local","port":5900,"username":"","rememberPassword":false}
+        """.utf8)
+        let host = try JSONDecoder().decode(SavedHost.self, from: legacy)
+        #expect(host.serviceName == nil)
+        #expect(host.hostname == "a.local")
+    }
+
     @Test func roundTripsThroughJSON() throws {
         let host = SavedHost(name: "Studio", hostname: "studio.local", port: 5901, username: "john", rememberPassword: true)
         let data = try JSONEncoder().encode(host)
@@ -23,6 +37,7 @@ struct SavedHostTests {
     @Test func discoveredHostBecomesSavedHost() {
         let nearby = DiscoveredHost(serviceName: "Mini", hostname: "10.0.0.5", port: 5900)
         let saved = nearby.asSavedHost()
+        #expect(saved.serviceName == "Mini")
         #expect(saved.name == "Mini")
         #expect(saved.hostname == "10.0.0.5")
         #expect(saved.port == 5900)

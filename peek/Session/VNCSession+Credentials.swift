@@ -6,6 +6,7 @@ extension VNCSession {
     func submitCredential(username: String, password: String, remember: Bool) {
         credentialRequest = nil
         pendingRemember = remember ? password : nil
+        submittedPassword = password
         desktop?.supply(RemoteCredential(username: username, password: password))
     }
 

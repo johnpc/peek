@@ -42,6 +42,7 @@ enum MockMode {
                 fixtures: [fixtureNearby],
                 status: args.contains(noLocalNetworkArgument) ? .localNetworkDenied : .searching)),
             settings: SettingsStore(defaults: defaults),
+            resolver: MockResolver(answers: [fixtureNearby.serviceName: fixtureNearby.hostname]),
             makeDesktop: { _, _ in MockDesktop() }
         )
     }

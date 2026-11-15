@@ -40,6 +40,7 @@ struct MockModeTests {
 struct AppEnvironmentTests {
     @Test func liveEnvironmentWiresRealDesktop() {
         let env = AppEnvironment.live()
+        #expect(env.resolver is BonjourResolver)
         let desktop = env.makeDesktop(SavedHost(name: "x", hostname: "127.0.0.1", port: 1), env.settings.options)
         #expect(desktop is RoyalVNCDesktop)
     }

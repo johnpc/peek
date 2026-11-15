@@ -12,6 +12,6 @@ struct DiscoveredHost: Identifiable, Equatable, Hashable {
 
     /// A saved-host value pre-filled from the advertisement.
     func asSavedHost() -> SavedHost {
-        SavedHost(name: serviceName, hostname: hostname, port: port)
+        SavedHost(name: serviceName, hostname: hostname, port: port, serviceName: serviceName)
     }
 }

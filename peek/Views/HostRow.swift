@@ -13,9 +13,11 @@ struct HostRow: View {
                 Text(host.displayName)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text(host.address)
+                Text(host.subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
             }
             Spacer()
             if host.rememberPassword {

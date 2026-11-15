@@ -72,6 +72,7 @@ final class ViewRenderTests: XCTestCase {
         render(PasswordField(text: .constant("x"), revealed: true))
         session.disconnect()
         render(SessionStatusView(session: session, onClose: {}))
+        render(ReconnectingPill())
         session.retry()
         session.submitCredential(username: "john", password: "nope", remember: false)
         render(SessionStatusView(session: session, onClose: {}))

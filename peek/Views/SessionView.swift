@@ -29,6 +29,8 @@ struct SessionView: View {
             }
             if !session.state.isActive || session.frame == nil {
                 SessionStatusView(session: session, onClose: onClose)
+            } else if session.state == .connecting {
+                ReconnectingPill()
             }
             VStack(spacing: 0) {
                 SessionToolbar(session: session, showKeyboard: $showKeyboard,

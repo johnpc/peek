@@ -7,14 +7,17 @@ final class AppEnvironment {
     let discovery: DiscoveryStore
     let settings: SettingsStore
     let makeDesktop: RemoteDesktopFactory
+    let resolver: HostResolver
 
     init(hosts: HostStore,
          discovery: DiscoveryStore,
          settings: SettingsStore,
+         resolver: HostResolver,
          makeDesktop: @escaping RemoteDesktopFactory) {
         self.hosts = hosts
         self.discovery = discovery
         self.settings = settings
+        self.resolver = resolver
         self.makeDesktop = makeDesktop
     }
 
@@ -23,6 +26,7 @@ final class AppEnvironment {
             hosts: HostStore(keychain: SystemKeychain()),
             discovery: DiscoveryStore(browser: BonjourBrowser()),
             settings: SettingsStore(),
+            resolver: BonjourResolver(),
             makeDesktop: { host, options in RoyalVNCDesktop(host: host, options: options) }
         )
     }
@@ -31,11 +35,17 @@ final class AppEnvironment {
     /// to store a new one when the user asks.
     func makeSession(for host: SavedHost) -> VNCSession {
         let options = settings.options
-        let session = VNCSession(host: host, savedPassword: hosts.password(for: host)) { [makeDesktop] in
-            makeDesktop(host, options)
+        let session = VNCSession(host: host, savedPassword: hosts.password(for: host),
+                                 resolver: resolver) { [makeDesktop] target in
+            makeDesktop(target, options)
         }
         session.onRememberPassword = { [hosts] password in
             hosts.rememberPassword(password, for: host)
+        }
+        session.onAddressChanged = { [hosts] address in
+            var updated = host
+            updated.hostname = address
+            hosts.save(updated, password: nil)
         }
         return session
     }

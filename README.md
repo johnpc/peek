@@ -28,7 +28,8 @@ is what it was built for.
 | On-screen keyboard with sticky ⌘ ⌥ ⌃ ⇧ and esc / tab / return / delete / arrows | ✅ |
 | Color depth (8/16/24-bit) and shared-screen settings | ✅ |
 | First-connect touch-controls tip, haptic clicks | ✅ |
-| Auto-reconnect when you come back to the app after a drop | ✅ |
+| Survives quick app switches; auto-reconnects (with your saved password) after longer ones, keeping the last screen up | ✅ |
+| Nearby Macs are re-resolved by name at connect time, so address changes don't strand them | ✅ |
 | Clipboard sync | ⬜ |
 | Hardware keyboard on iPad (arrows, Esc, Tab, ⌘/⌃/⌥ shortcuts) | ✅ |
 | Trackpad / mouse on iPad | ⬜ |
