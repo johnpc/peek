@@ -28,8 +28,8 @@ jobs:
     env:
       # Persistent on the runner: incremental builds + cached package checkouts
       # across runs (the workspace itself is re-checked-out every time).
-      DERIVED: ${{ github.workspace }}/../peek-derived
-      SPM: ${{ github.workspace }}/../peek-spm
+      DERIVED: /Users/john/peek-ci/derived
+      SPM: /Users/john/peek-ci/spm
     steps:
       - uses: actions/checkout@v5
 
@@ -144,8 +144,8 @@ jobs:
             xcodebuild archive \
               -scheme "$SCHEME" \
               -destination "generic/platform=iOS" \
-              -derivedDataPath "${{ github.workspace }}/../peek-derived" \
-              -clonedSourcePackagesDirPath "${{ github.workspace }}/../peek-spm" \
+              -derivedDataPath /Users/john/peek-ci/derived \
+              -clonedSourcePackagesDirPath /Users/john/peek-ci/spm \
               -archivePath ~/Desktop/peek.xcarchive \
               CODE_SIGNING_ALLOWED=NO \
               -quiet
