@@ -132,7 +132,21 @@ jobs:
           BUILD_NUM=$(date +%Y%m%d%H%M)
           agvtool new-version -all $BUILD_NUM
 
+      - name: Unlock CI signing keychain
+        env:
+          CI_KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
+        run: |
+          # ci-signing.keychain-db is on the mini's search list for other apps'
+          # deploys; left locked, codesign finds its Apple Distribution identity
+          # and waits forever for a password prompt. Unlock it in the daemon
+          # context and in the user session the export runs in.
+          security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
+          sudo -n launchctl asuser "$(id -u)" sudo -n -u "$(id -un)" env HOME="$HOME" \
+            security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
+
       - name: Archive and upload (auto-bump version on conflict)
+        # A signing hang must fail fast, not hold the heavy lane for the job's hour.
+        timeout-minutes: 20
         run: |
           # Export options, archive and export dir live in the per-job $RUNNER_TEMP: fixed /tmp and ~/Desktop paths get overwritten by other apps' concurrent deploys on the mini.
           cat > "$RUNNER_TEMP/ExportOptions.plist" << 'PLIST'
