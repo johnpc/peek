@@ -53,6 +53,16 @@ jobs:
             echo "$NEW" > "$STAMP"
           fi
 
+      - name: Create this job's own simulator
+        run: |
+          # The shared "iPhone 17 Pro" is also driven by other repos' jobs and agents on the
+          # mini; it was shut down under a peek run mid-launch ("No such process"). Own one.
+          UDID=$(xcrun simctl create "peek-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "iPhone 17 Pro")
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "DESTINATION=platform=iOS Simulator,id=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b > /dev/null
+
       - name: Build for testing
         run: |
           xcodebuild build-for-testing \
@@ -112,132 +122,35 @@ jobs:
           [ -d AcceptanceResults.xcresult ] && xcrun xcresulttool get test-results summary --path AcceptanceResults.xcresult \
             | python3 -c "import json,sys; [print(f'❌ {f[\"testIdentifierString\"]}: {f[\"failureText\"]}') for f in json.load(sys.stdin).get('testFailures', [])]" || true
 
-  deploy:
-    name: Deploy to App Store Connect
-    runs-on: [self-hosted, mac-mini]
-    timeout-minutes: 60
-    needs: gates
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Write App Store Connect API key
-        run: |
-          # Per-job $RUNNER_TEMP, not the shared ~/private_keys: other apps' deploys on the mini use the same key file and our cleanup would delete it mid-export.
-          mkdir -p "$RUNNER_TEMP/private_keys"
-          echo "${{ secrets.ASC_KEY_CONTENT }}" > "$RUNNER_TEMP/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8"
-
-      - name: Increment build number
-        run: |
-          BUILD_NUM=$(date +%Y%m%d%H%M)
-          agvtool new-version -all $BUILD_NUM
-
-      - name: Unlock CI signing keychain
-        env:
-          CI_KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
-        run: |
-          # ci-signing.keychain-db is on the mini's search list for other apps'
-          # deploys; left locked, codesign finds its Apple Distribution identity
-          # and waits forever for a password prompt. Unlock it in the daemon
-          # context and in the user session the export runs in.
-          security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
-          sudo -n launchctl asuser "$(id -u)" sudo -n -u "$(id -un)" env HOME="$HOME" \
-            security unlock-keychain -p "$CI_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/ci-signing.keychain-db"
-
-      - name: Archive and upload (auto-bump version on conflict)
-        # A signing hang must fail fast, not hold the heavy lane for the job's hour.
-        timeout-minutes: 20
-        run: |
-          # Export options, archive and export dir live in the per-job $RUNNER_TEMP: fixed /tmp and ~/Desktop paths get overwritten by other apps' concurrent deploys on the mini.
-          cat > "$RUNNER_TEMP/ExportOptions.plist" << 'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store-connect</string>
-              <key>destination</key>
-              <string>upload</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>teamID</key>
-              <string>${{ secrets.TEAM_ID }}</string>
-          </dict>
-          </plist>
-          PLIST
-
-          archive_and_upload() {
-            # Archive unsigned: the runner is a LaunchDaemon (no user security
-            # session), where Xcode can't install a signing certificate into
-            # any keychain. The export below signs with Apple's cloud-managed
-            # distribution certificate instead, which needs no local key.
-            xcodebuild archive \
-              -scheme "$SCHEME" \
-              -destination "generic/platform=iOS" \
-              -derivedDataPath /Users/john/peek-ci/derived \
-              -clonedSourcePackagesDirPath /Users/john/peek-ci/spm \
-              -archivePath "$RUNNER_TEMP/peek.xcarchive" \
-              CODE_SIGNING_ALLOWED=NO \
-              -quiet
-
-            # Run the export inside the logged-in user's session: from the runner's
-            # LaunchDaemon context, xcodebuild crashes (SIGTRAP in AppSSO/XPC,
-            # xpc_connection_set_target_uid misuse) while fetching the app record.
-            sudo -n launchctl asuser "$(id -u)" sudo -n -u "$(id -un)" env HOME="$HOME" \
-            xcodebuild -exportArchive \
-              -archivePath "$RUNNER_TEMP/peek.xcarchive" \
-              -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-              -exportPath "$RUNNER_TEMP/export" \
-              -allowProvisioningUpdates \
-              -authenticationKeyPath "$RUNNER_TEMP/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8" \
-              -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-              -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1
-          }
-
-          # Capture for the conflict check below, but always show the full
-          # output in the job log — a swallowed error here cost us a run.
-          set +e
-          OUTPUT=$(archive_and_upload 2>&1)
-          STATUS=$?
-          set -e
-          echo "$OUTPUT"
-          echo "archive/export exit status: $STATUS"
-          [ "$STATUS" -eq 0 ] && exit 0
-
-          if echo "$OUTPUT" | grep -q "Error Downloading App Information"; then
-            # The archive built and signed; App Store Connect just has no app
-            # record for this bundle id yet (the record can't be created by
-            # API). Not a code failure — surface it and let the run stay green.
-            echo "::warning title=TestFlight upload skipped::No App Store Connect app record exists for com.johncorser.peek yet. Create the app in App Store Connect (bundle id com.johncorser.peek); the next push to main will upload."
-            exit 0
-          fi
-
-          if echo "$OUTPUT" | grep -qi "version.*already exists\|already been uploaded\|redundant binary\|train.*closed\|higher version"; then
-            echo "⚠️ Version conflict detected, bumping minor version..."
-            CURRENT=$(grep 'MARKETING_VERSION' peek.xcodeproj/project.pbxproj | head -1 | sed 's/.*= *\(.*\);/\1/')
-            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
-            MINOR=$(echo "$CURRENT" | cut -d. -f2)
-            NEW_VERSION="${MAJOR}.$((MINOR + 1))"
-            sed -i '' "s/MARKETING_VERSION = ${CURRENT}/MARKETING_VERSION = ${NEW_VERSION}/g" peek.xcodeproj/project.pbxproj
-            echo "Bumped $CURRENT → $NEW_VERSION"
-
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "Bump version to $NEW_VERSION [skip ci]"
-            git push
-
-            rm -rf "$RUNNER_TEMP/peek.xcarchive" "$RUNNER_TEMP/export"
-            archive_and_upload
-          else
-            exit 1
-          fi
-
-      - name: Remove signing material
+      - name: Delete this job's simulator
         if: always()
         run: |
-          # Self-hosted: nothing is wiped between jobs, so don't leave the ASC
-          # key or the archive on the Mac Mini. Only this job's $RUNNER_TEMP
-          # copies — never the shared ~/private_keys other apps' deploys read.
-          rm -f "$RUNNER_TEMP/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8" "$RUNNER_TEMP/ExportOptions.plist"
-          rm -rf "$RUNNER_TEMP/peek.xcarchive" "$RUNNER_TEMP/export"
+          [ -n "${SIM_UDID:-}" ] || exit 0
+          xcrun simctl shutdown "$SIM_UDID" > /dev/null 2>&1 || true
+          xcrun simctl delete "$SIM_UDID"
+
+  deploy:
+    # Shared deploy (johnpc/ci-workflows): manual signing from the mini's CI keychain
+    # in the archive (keeps entitlements), per-job $RUNNER_TEMP paths, and a version
+    # bump that lands as a DEPLOY_PAT-authored PR (main is protected) instead of a push.
+    needs: gates
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    uses: johnpc/ci-workflows/.github/workflows/ios-deploy-native.yml@v1
+    # Only the secrets the deploy needs, not `inherit`.
+    secrets:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+      CI_KEYCHAIN_PASSWORD: ${{ secrets.CI_KEYCHAIN_PASSWORD }}
+      DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
+    with:
+      project: peek.xcodeproj
+      scheme: peek
+      bump: minor
+      timeout-minutes: 60
+      xcodebuild-args: -derivedDataPath /Users/john/peek-ci/derived -clonedSourcePackagesDirPath /Users/john/peek-ci/spm
+      ci-workflow: quality-gates.yml
