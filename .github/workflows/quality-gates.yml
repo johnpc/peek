@@ -53,6 +53,16 @@ jobs:
             echo "$NEW" > "$STAMP"
           fi
 
+      - name: Create this job's own simulator
+        run: |
+          # The shared "iPhone 17 Pro" is also driven by other repos' jobs and agents on the
+          # mini; it was shut down under a peek run mid-launch ("No such process"). Own one.
+          UDID=$(xcrun simctl create "peek-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "iPhone 17 Pro")
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "DESTINATION=platform=iOS Simulator,id=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b > /dev/null
+
       - name: Build for testing
         run: |
           xcodebuild build-for-testing \
@@ -111,6 +121,13 @@ jobs:
         run: |
           [ -d AcceptanceResults.xcresult ] && xcrun xcresulttool get test-results summary --path AcceptanceResults.xcresult \
             | python3 -c "import json,sys; [print(f'❌ {f[\"testIdentifierString\"]}: {f[\"failureText\"]}') for f in json.load(sys.stdin).get('testFailures', [])]" || true
+
+      - name: Delete this job's simulator
+        if: always()
+        run: |
+          [ -n "${SIM_UDID:-}" ] || exit 0
+          xcrun simctl shutdown "$SIM_UDID" > /dev/null 2>&1 || true
+          xcrun simctl delete "$SIM_UDID"
 
   deploy:
     # Shared deploy (johnpc/ci-workflows): manual signing from the mini's CI keychain
